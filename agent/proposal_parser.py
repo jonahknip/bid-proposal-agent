@@ -1,108 +1,82 @@
 """
-Proposal Parser - Extract requirements, line items, and scope from RFP/bid documents
-Supports PDF and Excel formats
+Proposal Parser - Extract bid specifications, requirements, and line items from bid documents
+Optimized for civil engineering design/survey work bidding
 """
 
 import os
 import io
 import json
 import re
-import base64
-from typing import List, Dict, Any, Optional, Tuple
+from typing import List, Dict, Any, Optional
 from datetime import datetime
-from dataclasses import dataclass, field, asdict
 
 import fitz  # PyMuPDF
-from PIL import Image
 from openai import OpenAI
 import openpyxl
 
 
-@dataclass
-class BidLineItem:
-    """A single line item from bid documents"""
-    item_number: str = ""
-    description: str = ""
-    quantity: float = 0.0
-    unit: str = ""
-    unit_price: float = 0.0
-    total_price: float = 0.0
-    category: str = ""
-    notes: str = ""
-    required: bool = True
-
-
-@dataclass
-class ProposalRequirements:
-    """Extracted requirements from proposal/RFP documents"""
-    project_name: str = ""
-    project_number: str = ""
-    owner: str = ""
-    location: str = ""
-    bid_date: str = ""
-    submission_deadline: str = ""
-    scope_summary: str = ""
-    line_items: List[BidLineItem] = field(default_factory=list)
-    special_requirements: List[str] = field(default_factory=list)
-    qualifications: List[str] = field(default_factory=list)
-    bonding_requirements: str = ""
-    insurance_requirements: str = ""
-    liquidated_damages: str = ""
-    completion_time: str = ""
-    addenda: List[str] = field(default_factory=list)
-    contacts: List[Dict[str, str]] = field(default_factory=list)
-    documents_required: List[str] = field(default_factory=list)
-
-
 class ProposalParser:
     """
-    Parses RFP/bid documents to extract requirements, line items, and scope.
-    Supports PDF and Excel formats.
+    Parses RFP/bid documents to extract specifications and requirements
+    for accurate civil engineering bid estimates.
     """
     
-    # RFP parsing prompt for GPT-4
-    RFP_EXTRACTION_PROMPT = """You are an expert at analyzing civil engineering bid documents and RFPs.
-Analyze this document and extract all relevant bid information.
+    BID_DOC_EXTRACTION_PROMPT = """You are an expert civil engineering bid analyst extracting information from bid documents.
 
-Extract the following information:
+Extract ALL relevant information for preparing an accurate bid proposal:
 
 1. PROJECT IDENTIFICATION:
-   - Project name
-   - Project number
-   - Owner/Client
-   - Location
+   - Project name and number
+   - Owner/Agency
+   - Location (city, county, state)
    - Engineer of Record
+   - Project type (road, utility, site development, survey, etc.)
 
-2. BID SCHEDULE:
-   - Bid date/deadline
-   - Submission requirements
-   - Pre-bid meeting date (if any)
+2. BID SCHEDULE & DEADLINES:
+   - Bid due date and time
+   - Pre-bid meeting (date, time, location, mandatory?)
+   - Site visit information
+   - Question deadline
+   - Award date (if stated)
 
 3. SCOPE OF WORK:
-   - Brief summary of work
-   - Major work items
-   - Project phases (if any)
+   - Detailed description of work
+   - Project limits (stations, addresses, boundaries)
+   - Major work elements
+   - Phases or sequences required
+   - Working days or calendar days allowed
 
 4. LINE ITEMS / BID SCHEDULE:
-   Extract ALL line items from any bid schedule, pay item list, or quantity table.
-   For each item:
+   For EACH pay item, extract:
    - Item number
-   - Description
-   - Estimated quantity
+   - Description (exact wording)
+   - Quantity
    - Unit of measure
-   - Category (earthwork, paving, utilities, etc.)
+   - Any notes or specifications
 
-5. SPECIAL REQUIREMENTS:
-   - Qualifications required
+5. SPECIFICATIONS & STANDARDS:
+   - Referenced specs (MDOT, local agency, etc.)
+   - Material requirements
+   - Testing requirements
+   - Quality standards
+   - Special provisions
+
+6. SPECIAL CONDITIONS:
+   - Prevailing wage requirements
+   - DBE/MBE goals
    - Bonding requirements
    - Insurance requirements
    - Liquidated damages
-   - Completion time/schedule
-   - DBE/MBE requirements
-   - Special provisions
+   - Retainage
+   - Traffic control requirements
+   - Working hour restrictions
+   - Environmental constraints
+   - Permit requirements
 
-6. DOCUMENTS REQUIRED:
-   - List all documents required for bid submission
+7. CONTACTS:
+   - Project manager
+   - Bid contact
+   - Questions to
 
 Return a JSON object:
 {
@@ -111,76 +85,60 @@ Return a JSON object:
         "project_number": "",
         "owner": "",
         "location": "",
-        "engineer": ""
+        "engineer": "",
+        "project_type": ""
     },
     "bid_schedule": {
         "bid_date": "",
-        "submission_deadline": "",
-        "pre_bid_meeting": ""
+        "bid_time": "",
+        "pre_bid_meeting": {"date": "", "time": "", "location": "", "mandatory": false},
+        "question_deadline": "",
+        "site_visit": ""
     },
-    "scope_summary": "Brief description of the project scope",
+    "scope": {
+        "description": "",
+        "limits": "",
+        "major_elements": [],
+        "duration": "",
+        "phases": []
+    },
     "line_items": [
         {
             "item_number": "",
             "description": "",
             "quantity": 0,
             "unit": "",
-            "category": "",
+            "spec_reference": "",
             "notes": ""
         }
     ],
+    "specifications": {
+        "standard_specs": [],
+        "special_provisions": [],
+        "material_requirements": [],
+        "testing_requirements": []
+    },
     "requirements": {
-        "qualifications": [],
+        "prevailing_wage": false,
+        "dbe_goal": "",
         "bonding": "",
         "insurance": "",
         "liquidated_damages": "",
-        "completion_time": "",
-        "special": []
+        "retainage": "",
+        "working_hours": "",
+        "traffic_control": "",
+        "permits_required": []
     },
-    "documents_required": [],
     "contacts": [
         {"name": "", "title": "", "email": "", "phone": ""}
-    ]
+    ],
+    "key_dates": [
+        {"event": "", "date": ""}
+    ],
+    "risks_notes": []
 }
 
 Only return the JSON object, no other text."""
-
-    EXCEL_BID_SCHEDULE_PROMPT = """You are analyzing a civil engineering bid schedule spreadsheet.
-The data below is extracted from an Excel file. Parse it and extract all bid line items.
-
-For each line item, identify:
-- Item number
-- Description  
-- Quantity
-- Unit of measure
-- Unit price (if provided)
-- Category (earthwork, paving, utilities, structures, erosion control, traffic control, landscaping, misc)
-
-Return a JSON object:
-{
-    "line_items": [
-        {
-            "item_number": "",
-            "description": "",
-            "quantity": 0,
-            "unit": "",
-            "unit_price": 0,
-            "category": "",
-            "notes": ""
-        }
-    ],
-    "totals": {
-        "subtotal": 0,
-        "contingency": 0,
-        "total": 0
-    },
-    "notes": "Any relevant notes about the bid schedule"
-}
-
-Only return the JSON object, no other text.
-
-EXCEL DATA:
-"""
 
     def __init__(self, api_key: Optional[str] = None):
         """Initialize the proposal parser with OpenAI API key."""
@@ -190,277 +148,142 @@ EXCEL DATA:
         self.client = OpenAI(api_key=self.api_key)
         self.model = "gpt-4o"
     
-    def parse_pdf(self, pdf_path: str, max_pages: int = 20) -> Dict[str, Any]:
-        """
-        Parse an RFP/bid document PDF.
-        
-        Args:
-            pdf_path: Path to the PDF file
-            max_pages: Maximum pages to analyze with vision
-            
-        Returns:
-            Extracted proposal requirements
-        """
+    def extract_text_from_pdf(self, pdf_path: str) -> str:
+        """Extract all text from a PDF."""
         doc = fitz.open(pdf_path)
-        
-        # Extract all text first
-        full_text = ""
+        text = ""
         for page in doc:
-            full_text += page.get_text() + "\n"
-        
-        # Also get images of key pages for vision analysis
-        images = []
-        for page_num in range(min(len(doc), max_pages)):
-            page = doc[page_num]
-            zoom = 150 / 72
-            mat = fitz.Matrix(zoom, zoom)
-            pix = page.get_pixmap(matrix=mat)
-            
-            img_data = pix.tobytes("png")
-            img = Image.open(io.BytesIO(img_data))
-            
-            # Resize if needed
-            max_dim = 1536
-            if max(img.size) > max_dim:
-                ratio = max_dim / max(img.size)
-                new_size = (int(img.size[0] * ratio), int(img.size[1] * ratio))
-                img = img.resize(new_size, Image.LANCZOS)
-            
-            buffer = io.BytesIO()
-            img.save(buffer, format="PNG")
-            base64_image = base64.b64encode(buffer.getvalue()).decode('utf-8')
-            images.append(base64_image)
-        
+            text += page.get_text() + "\n"
         doc.close()
-        
-        # Build message content with text and images
-        content = [
-            {"type": "text", "text": f"{self.RFP_EXTRACTION_PROMPT}\n\nDOCUMENT TEXT:\n{full_text[:15000]}"}
-        ]
-        
-        # Add images (limit to 5 for token efficiency)
-        for img_b64 in images[:5]:
-            content.append({
-                "type": "image_url",
-                "image_url": {
-                    "url": f"data:image/png;base64,{img_b64}",
-                    "detail": "high"
-                }
-            })
-        
-        # Call GPT-4 Vision
-        response = self.client.chat.completions.create(
-            model=self.model,
-            messages=[{"role": "user", "content": content}],
-            max_tokens=4000,
-            temperature=0.2
-        )
-        
-        try:
-            result_text = response.choices[0].message.content
-            # Clean up response
-            if result_text.startswith('```'):
-                result_text = result_text.split('```')[1]
-                if result_text.startswith('json'):
-                    result_text = result_text[4:]
-            if result_text.endswith('```'):
-                result_text = result_text[:-3]
-            
-            result = json.loads(result_text.strip())
-            result['source_file'] = os.path.basename(pdf_path)
-            result['pages_analyzed'] = min(len(images), max_pages)
-            return result
-            
-        except json.JSONDecodeError:
-            # Try to extract JSON
-            content_text = response.choices[0].message.content
-            start = content_text.find('{')
-            end = content_text.rfind('}') + 1
-            if start != -1 and end > start:
-                try:
-                    result = json.loads(content_text[start:end])
-                    result['source_file'] = os.path.basename(pdf_path)
-                    return result
-                except:
-                    pass
-            
-            return {
-                'error': 'Failed to parse document',
-                'source_file': os.path.basename(pdf_path),
-                'raw_text': full_text[:5000]
-            }
+        return text
     
-    def parse_excel(self, excel_path: str) -> Dict[str, Any]:
-        """
-        Parse an Excel bid schedule.
-        
-        Args:
-            excel_path: Path to the Excel file
-            
-        Returns:
-            Extracted line items and totals
-        """
+    def extract_from_excel(self, excel_path: str) -> str:
+        """Extract content from Excel file."""
         wb = openpyxl.load_workbook(excel_path, data_only=True)
-        
-        all_data = []
+        text = ""
         
         for sheet_name in wb.sheetnames:
             ws = wb[sheet_name]
-            sheet_data = {
-                'sheet_name': sheet_name,
-                'rows': []
-            }
+            text += f"\n=== SHEET: {sheet_name} ===\n"
             
             for row in ws.iter_rows(values_only=True):
-                # Skip completely empty rows
                 if any(cell is not None for cell in row):
-                    sheet_data['rows'].append([str(cell) if cell is not None else '' for cell in row])
-            
-            all_data.append(sheet_data)
+                    row_text = " | ".join([str(cell) if cell is not None else "" for cell in row])
+                    text += row_text + "\n"
         
         wb.close()
-        
-        # Convert to text for GPT analysis
-        text_repr = ""
-        for sheet in all_data:
-            text_repr += f"\n=== SHEET: {sheet['sheet_name']} ===\n"
-            for row in sheet['rows'][:100]:  # Limit rows
-                text_repr += " | ".join(row) + "\n"
-        
-        # Use GPT to parse the structure
-        response = self.client.chat.completions.create(
-            model=self.model,
-            messages=[
-                {"role": "user", "content": f"{self.EXCEL_BID_SCHEDULE_PROMPT}\n{text_repr}"}
-            ],
-            max_tokens=4000,
-            temperature=0.2
-        )
-        
-        try:
-            result_text = response.choices[0].message.content
-            if result_text.startswith('```'):
-                result_text = result_text.split('```')[1]
-                if result_text.startswith('json'):
-                    result_text = result_text[4:]
-            if result_text.endswith('```'):
-                result_text = result_text[:-3]
-            
-            result = json.loads(result_text.strip())
-            result['source_file'] = os.path.basename(excel_path)
-            result['sheets_found'] = [s['sheet_name'] for s in all_data]
-            return result
-            
-        except json.JSONDecodeError:
-            content_text = response.choices[0].message.content
-            start = content_text.find('{')
-            end = content_text.rfind('}') + 1
-            if start != -1 and end > start:
-                try:
-                    result = json.loads(content_text[start:end])
-                    result['source_file'] = os.path.basename(excel_path)
-                    return result
-                except:
-                    pass
-            
-            return {
-                'error': 'Failed to parse Excel file',
-                'source_file': os.path.basename(excel_path),
-                'sheets_found': [s['sheet_name'] for s in all_data]
-            }
+        return text
     
     def parse_bid_document(self, file_path: str) -> Dict[str, Any]:
         """
-        Parse a bid document (auto-detects PDF or Excel).
+        Parse a single bid document.
         
         Args:
             file_path: Path to the document
             
         Returns:
-            Extracted requirements and line items
+            Extracted bid information
         """
         ext = os.path.splitext(file_path)[1].lower()
         
         if ext == '.pdf':
-            return self.parse_pdf(file_path)
+            text = self.extract_text_from_pdf(file_path)
         elif ext in ['.xlsx', '.xls', '.xlsm']:
-            return self.parse_excel(file_path)
+            text = self.extract_from_excel(file_path)
         else:
             raise ValueError(f"Unsupported file type: {ext}")
+        
+        # Limit text length
+        if len(text) > 50000:
+            text = text[:50000] + "\n[... truncated ...]"
+        
+        response = self.client.chat.completions.create(
+            model=self.model,
+            messages=[
+                {
+                    "role": "user",
+                    "content": f"{self.BID_DOC_EXTRACTION_PROMPT}\n\nDOCUMENT CONTENT:\n{text}"
+                }
+            ],
+            max_tokens=6000,
+            temperature=0.2
+        )
+        
+        result = self._parse_response(response.choices[0].message.content)
+        result['source_file'] = os.path.basename(file_path)
+        return result
     
     def parse_multiple_documents(self, file_paths: List[str]) -> Dict[str, Any]:
         """
         Parse multiple bid documents and combine results.
         
         Args:
-            file_paths: List of paths to documents
+            file_paths: List of document paths
             
         Returns:
-            Combined extracted requirements
+            Combined extracted information
         """
-        results = []
-        all_line_items = []
-        
+        # Combine all document text
+        combined_text = ""
         for path in file_paths:
-            try:
-                result = self.parse_bid_document(path)
-                results.append(result)
-                
-                # Collect line items
-                if 'line_items' in result:
-                    for item in result['line_items']:
-                        item['source_file'] = os.path.basename(path)
-                        all_line_items.append(item)
-                        
-            except Exception as e:
-                results.append({
-                    'error': str(e),
-                    'source_file': os.path.basename(path)
-                })
+            ext = os.path.splitext(path)[1].lower()
+            combined_text += f"\n--- Document: {os.path.basename(path)} ---\n"
+            
+            if ext == '.pdf':
+                combined_text += self.extract_text_from_pdf(path)
+            elif ext in ['.xlsx', '.xls', '.xlsm']:
+                combined_text += self.extract_from_excel(path)
         
-        # Combine project info from first successful parse
-        combined_project_info = {}
-        for r in results:
-            if 'project_info' in r:
-                combined_project_info = r['project_info']
-                break
+        # Limit text
+        if len(combined_text) > 60000:
+            combined_text = combined_text[:60000] + "\n[... truncated ...]"
         
-        # Combine requirements
-        combined_requirements = {
-            'qualifications': [],
-            'bonding': '',
-            'insurance': '',
-            'special': []
-        }
-        for r in results:
-            if 'requirements' in r:
-                req = r['requirements']
-                combined_requirements['qualifications'].extend(req.get('qualifications', []))
-                if req.get('bonding'):
-                    combined_requirements['bonding'] = req['bonding']
-                if req.get('insurance'):
-                    combined_requirements['insurance'] = req['insurance']
-                combined_requirements['special'].extend(req.get('special', []))
+        response = self.client.chat.completions.create(
+            model=self.model,
+            messages=[
+                {
+                    "role": "user",
+                    "content": f"{self.BID_DOC_EXTRACTION_PROMPT}\n\nDOCUMENT CONTENT:\n{combined_text}"
+                }
+            ],
+            max_tokens=6000,
+            temperature=0.2
+        )
         
-        return {
-            'project_info': combined_project_info,
-            'individual_results': results,
-            'combined_line_items': all_line_items,
-            'requirements': combined_requirements,
-            'files_processed': len(file_paths)
-        }
+        result = self._parse_response(response.choices[0].message.content)
+        result['source_files'] = [os.path.basename(p) for p in file_paths]
+        result['files_processed'] = len(file_paths)
+        return result
+    
+    def _parse_response(self, content: str) -> Dict[str, Any]:
+        """Parse GPT response to JSON."""
+        try:
+            if content.startswith('```'):
+                content = content.split('```')[1]
+                if content.startswith('json'):
+                    content = content[4:]
+            if content.endswith('```'):
+                content = content[:-3]
+            
+            return json.loads(content.strip())
+            
+        except json.JSONDecodeError:
+            start = content.find('{')
+            end = content.rfind('}') + 1
+            if start != -1 and end > start:
+                try:
+                    return json.loads(content[start:end])
+                except:
+                    pass
+            
+            return {
+                'error': 'Failed to parse document',
+                'raw_content': content[:2000]
+            }
     
     def extract_line_items_table(self, result: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """
-        Extract just the line items from parsed results in a clean table format.
-        
-        Args:
-            result: Parsed proposal results
-            
-        Returns:
-            List of line items for tabular display
-        """
-        items = result.get('line_items', []) or result.get('combined_line_items', [])
+        """Extract line items in table format."""
+        items = result.get('line_items', [])
         
         clean_items = []
         for i, item in enumerate(items, 1):
@@ -469,111 +292,56 @@ EXCEL DATA:
                 'Description': item.get('description', ''),
                 'Quantity': item.get('quantity', 0),
                 'Unit': item.get('unit', ''),
-                'Unit Price': item.get('unit_price', 0),
-                'Category': item.get('category', ''),
-                'Source': item.get('source_file', '')
+                'Spec': item.get('spec_reference', ''),
+                'Notes': item.get('notes', '')
             })
         
         return clean_items
     
-    def generate_requirements_checklist(self, result: Dict[str, Any]) -> List[Dict[str, str]]:
-        """
-        Generate a checklist of requirements from parsed proposal.
-        
-        Args:
-            result: Parsed proposal results
-            
-        Returns:
-            List of requirement items for checklist
-        """
-        checklist = []
-        
-        # Project info requirements
+    def generate_bid_summary(self, result: Dict[str, Any]) -> str:
+        """Generate a text summary of the bid requirements."""
         project = result.get('project_info', {})
-        if project.get('project_name'):
-            checklist.append({
-                'category': 'Project',
-                'requirement': f"Project: {project.get('project_name')}",
-                'status': 'info'
-            })
-        
-        # Bid schedule
-        bid_schedule = result.get('bid_schedule', {})
-        if bid_schedule.get('bid_date'):
-            checklist.append({
-                'category': 'Deadline',
-                'requirement': f"Bid Due: {bid_schedule.get('bid_date')}",
-                'status': 'critical'
-            })
-        
-        # Requirements
+        schedule = result.get('bid_schedule', {})
+        scope = result.get('scope', {})
         requirements = result.get('requirements', {})
         
-        if requirements.get('bonding'):
-            checklist.append({
-                'category': 'Bonding',
-                'requirement': requirements.get('bonding'),
-                'status': 'required'
-            })
-        
-        if requirements.get('insurance'):
-            checklist.append({
-                'category': 'Insurance',
-                'requirement': requirements.get('insurance'),
-                'status': 'required'
-            })
-        
-        for qual in requirements.get('qualifications', []):
-            checklist.append({
-                'category': 'Qualification',
-                'requirement': qual,
-                'status': 'required'
-            })
-        
-        for spec in requirements.get('special', []):
-            checklist.append({
-                'category': 'Special',
-                'requirement': spec,
-                'status': 'required'
-            })
-        
-        # Documents required
-        for doc in result.get('documents_required', []):
-            checklist.append({
-                'category': 'Document',
-                'requirement': doc,
-                'status': 'required'
-            })
-        
-        return checklist
+        summary = f"""
+PROJECT: {project.get('project_name', 'N/A')}
+PROJECT NO: {project.get('project_number', 'N/A')}
+OWNER: {project.get('owner', 'N/A')}
+LOCATION: {project.get('location', 'N/A')}
+TYPE: {project.get('project_type', 'N/A')}
+
+BID DUE: {schedule.get('bid_date', 'N/A')} at {schedule.get('bid_time', 'N/A')}
+
+SCOPE: {scope.get('description', 'N/A')}
+DURATION: {scope.get('duration', 'N/A')}
+
+LINE ITEMS: {len(result.get('line_items', []))} items
+
+KEY REQUIREMENTS:
+- Prevailing Wage: {'Yes' if requirements.get('prevailing_wage') else 'No/Not Specified'}
+- DBE Goal: {requirements.get('dbe_goal', 'N/A')}
+- Bonding: {requirements.get('bonding', 'N/A')}
+- Liquidated Damages: {requirements.get('liquidated_damages', 'N/A')}
+"""
+        return summary.strip()
     
-    def categorize_line_items(self, items: List[Dict[str, Any]]) -> Dict[str, List[Dict[str, Any]]]:
-        """
-        Organize line items by category.
+    def get_key_dates(self, result: Dict[str, Any]) -> List[Dict[str, str]]:
+        """Extract all key dates from parsed results."""
+        dates = result.get('key_dates', [])
         
-        Args:
-            items: List of line items
-            
-        Returns:
-            Dictionary of items organized by category
-        """
-        categories = {
-            'earthwork': [],
-            'paving': [],
-            'utilities': [],
-            'structures': [],
-            'erosion_control': [],
-            'traffic_control': [],
-            'landscaping': [],
-            'survey': [],
-            'misc': []
-        }
+        # Add bid schedule dates
+        schedule = result.get('bid_schedule', {})
+        if schedule.get('bid_date'):
+            dates.append({'event': 'Bid Due', 'date': f"{schedule.get('bid_date')} {schedule.get('bid_time', '')}"})
         
-        for item in items:
-            cat = item.get('category', 'misc').lower().replace(' ', '_')
-            if cat not in categories:
-                cat = 'misc'
-            categories[cat].append(item)
+        pre_bid = schedule.get('pre_bid_meeting', {})
+        if pre_bid.get('date'):
+            mandatory = " (MANDATORY)" if pre_bid.get('mandatory') else ""
+            dates.append({'event': f'Pre-Bid Meeting{mandatory}', 'date': f"{pre_bid.get('date')} {pre_bid.get('time', '')}"})
         
-        # Remove empty categories
-        return {k: v for k, v in categories.items() if v}
+        if schedule.get('question_deadline'):
+            dates.append({'event': 'Question Deadline', 'date': schedule.get('question_deadline')})
+        
+        return dates

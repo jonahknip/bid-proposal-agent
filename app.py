@@ -1,6 +1,6 @@
 """
 Bid Proposal Agent - Web Application
-A tool for analyzing and reviewing civil engineering bid proposals
+Expert civil engineering bid analysis and proposal tool
 """
 
 import os
@@ -16,7 +16,7 @@ from io import BytesIO
 from flask import Flask, render_template, request, jsonify, send_file, session
 from werkzeug.utils import secure_filename
 
-from agent.quantity_calculator import QuantityCalculator
+from agent.quantity_calculator import BidEstimator
 from agent.proposal_parser import ProposalParser
 from agent.bid_analyzer import BidAnalyzer
 from agent.report_generator import ReportGenerator
@@ -56,10 +56,10 @@ def get_session_data():
     sid = get_session_id()
     if sid not in session_data:
         session_data[sid] = {
-            'proposal_requirements': None,
-            'bid_proposal': None,
-            'plan_quantities': None,
-            'analysis_results': None,
+            'bid_docs': None,
+            'current_proposal': None,
+            'estimate': None,
+            'analysis': None,
             'history': []
         }
     return session_data[sid]
@@ -77,114 +77,20 @@ def health():
     return jsonify({'status': 'healthy', 'service': 'bid-proposal-agent'})
 
 
-@app.route('/api/parse-proposal', methods=['POST'])
-def parse_proposal_documents():
+@app.route('/api/parse-bid-docs', methods=['POST'])
+def parse_bid_documents():
     """
-    Parse proposal/RFP documents to extract requirements and line items.
-    Accepts PDF and Excel files.
-    """
-    temp_files = []
-    
-    try:
-        if 'files' not in request.files:
-            return jsonify({
-                'success': False,
-                'error': 'No files uploaded'
-            }), 400
-        
-        files = request.files.getlist('files')
-        if not files or files[0].filename == '':
-            return jsonify({
-                'success': False,
-                'error': 'No files selected'
-            }), 400
-        
-        # Save uploaded files
-        file_paths = []
-        for file in files:
-            if file.filename and allowed_file(file.filename):
-                temp_dir = tempfile.mkdtemp()
-                filename = secure_filename(file.filename)
-                temp_path = os.path.join(temp_dir, filename)
-                file.save(temp_path)
-                file_paths.append(temp_path)
-                temp_files.append(temp_path)
-                logger.info(f"Saved proposal document: {filename}")
-            else:
-                logger.warning(f"Skipped invalid file: {file.filename}")
-        
-        if not file_paths:
-            return jsonify({
-                'success': False,
-                'error': 'No valid files uploaded. Supported formats: PDF, Excel (.xlsx, .xls)'
-            }), 400
-        
-        # Parse documents
-        parser = ProposalParser()
-        
-        if len(file_paths) == 1:
-            result = parser.parse_bid_document(file_paths[0])
-        else:
-            result = parser.parse_multiple_documents(file_paths)
-        
-        # Store in session
-        data = get_session_data()
-        data['proposal_requirements'] = result
-        
-        # Extract clean line items for response
-        line_items = parser.extract_line_items_table(result)
-        requirements_checklist = parser.generate_requirements_checklist(result)
-        
-        return jsonify({
-            'success': True,
-            'project_info': result.get('project_info', {}),
-            'bid_schedule': result.get('bid_schedule', {}),
-            'scope_summary': result.get('scope_summary', ''),
-            'line_items': line_items,
-            'line_item_count': len(line_items),
-            'requirements_checklist': requirements_checklist,
-            'files_processed': len(file_paths)
-        })
-        
-    except Exception as e:
-        logger.error(f"Parse proposal error: {e}\n{traceback.format_exc()}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
-    
-    finally:
-        # Clean up temp files
-        for path in temp_files:
-            try:
-                if os.path.exists(path):
-                    os.remove(path)
-                    os.rmdir(os.path.dirname(path))
-            except Exception:
-                pass
-
-
-@app.route('/api/parse-bid', methods=['POST'])
-def parse_bid_proposal():
-    """
-    Parse the working bid proposal document.
-    Accepts PDF and Excel files.
+    Parse bid documents (RFP, bid schedule, specs) to extract requirements.
     """
     temp_files = []
     
     try:
         if 'files' not in request.files:
-            return jsonify({
-                'success': False,
-                'error': 'No files uploaded'
-            }), 400
+            return jsonify({'success': False, 'error': 'No files uploaded'}), 400
         
         files = request.files.getlist('files')
         if not files or files[0].filename == '':
-            return jsonify({
-                'success': False,
-                'error': 'No files selected'
-            }), 400
+            return jsonify({'success': False, 'error': 'No files selected'}), 400
         
         # Save uploaded files
         file_paths = []
@@ -201,7 +107,7 @@ def parse_bid_proposal():
         if not file_paths:
             return jsonify({
                 'success': False,
-                'error': 'No valid files uploaded'
+                'error': 'No valid files uploaded. Supported: PDF, Excel'
             }), 400
         
         # Parse documents
@@ -214,25 +120,29 @@ def parse_bid_proposal():
         
         # Store in session
         data = get_session_data()
-        data['bid_proposal'] = result
+        data['bid_docs'] = result
         
-        # Extract clean line items
+        # Extract summary
         line_items = parser.extract_line_items_table(result)
+        key_dates = parser.get_key_dates(result)
+        summary = parser.generate_bid_summary(result)
         
         return jsonify({
             'success': True,
+            'project_info': result.get('project_info', {}),
+            'scope': result.get('scope', {}),
             'line_items': line_items,
             'line_item_count': len(line_items),
-            'totals': result.get('totals', {}),
+            'requirements': result.get('requirements', {}),
+            'specifications': result.get('specifications', {}),
+            'key_dates': key_dates,
+            'summary': summary,
             'files_processed': len(file_paths)
         })
         
     except Exception as e:
-        logger.error(f"Parse bid error: {e}\n{traceback.format_exc()}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        logger.error(f"Parse bid docs error: {e}\n{traceback.format_exc()}")
+        return jsonify({'success': False, 'error': str(e)}), 500
     
     finally:
         for path in temp_files:
@@ -244,77 +154,55 @@ def parse_bid_proposal():
                 pass
 
 
-@app.route('/api/extract-quantities', methods=['POST'])
-def extract_quantities():
+@app.route('/api/parse-proposal', methods=['POST'])
+def parse_current_proposal():
     """
-    Extract quantities from plan sheets using AI vision.
-    Accepts PDF files only.
+    Parse an existing proposal being worked on for review.
     """
     temp_files = []
     
     try:
         if 'files' not in request.files:
-            return jsonify({
-                'success': False,
-                'error': 'No files uploaded'
-            }), 400
+            return jsonify({'success': False, 'error': 'No files uploaded'}), 400
         
         files = request.files.getlist('files')
-        pdf_paths = []
+        if not files or files[0].filename == '':
+            return jsonify({'success': False, 'error': 'No files selected'}), 400
         
+        # Save uploaded files
+        file_paths = []
         for file in files:
-            if file.filename and file.filename.lower().endswith('.pdf'):
+            if file.filename and allowed_file(file.filename):
                 temp_dir = tempfile.mkdtemp()
                 filename = secure_filename(file.filename)
                 temp_path = os.path.join(temp_dir, filename)
                 file.save(temp_path)
-                pdf_paths.append(temp_path)
+                file_paths.append(temp_path)
                 temp_files.append(temp_path)
-                logger.info(f"Saved plan file: {filename}")
         
-        if not pdf_paths:
-            return jsonify({
-                'success': False,
-                'error': 'No PDF files uploaded. Plan sheets must be PDF format.'
-            }), 400
+        if not file_paths:
+            return jsonify({'success': False, 'error': 'No valid files uploaded'}), 400
         
-        # Get max sheets parameter
-        max_sheets = request.form.get('max_sheets')
-        max_sheets = int(max_sheets) if max_sheets else None
-        
-        # Extract quantities
-        calculator = QuantityCalculator()
-        
-        if len(pdf_paths) == 1:
-            result = calculator.extract_quantities_from_pdf(pdf_paths[0], max_sheets)
-        else:
-            result = calculator.extract_quantities_from_multiple_pdfs(pdf_paths, max_sheets)
-        
-        # Aggregate quantities
-        all_quantities = result.get('all_quantities', [])
-        aggregated = calculator.aggregate_quantities(all_quantities)
+        # Parse using estimator
+        estimator = BidEstimator()
+        result = estimator.analyze_bid_documents(file_paths)
         
         # Store in session
         data = get_session_data()
-        data['plan_quantities'] = {
-            'raw': result,
-            'aggregated': aggregated
-        }
+        data['current_proposal'] = result
         
         return jsonify({
             'success': True,
-            'quantities': aggregated,
-            'quantity_count': len(aggregated),
-            'sheets_processed': result.get('sheets_processed', 0),
-            'summary': result.get('quantity_summary', {})
+            'project_info': result.get('project_summary', {}),
+            'line_items': result.get('line_items', []),
+            'line_item_count': len(result.get('line_items', [])),
+            'bid_total': result.get('bid_total', {}),
+            'files_processed': len(file_paths)
         })
         
     except Exception as e:
-        logger.error(f"Quantity extraction error: {e}\n{traceback.format_exc()}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        logger.error(f"Parse proposal error: {e}\n{traceback.format_exc()}")
+        return jsonify({'success': False, 'error': str(e)}), 500
     
     finally:
         for path in temp_files:
@@ -326,126 +214,104 @@ def extract_quantities():
                 pass
 
 
-@app.route('/api/analyze', methods=['POST'])
-def analyze_bid():
+@app.route('/api/generate-estimate', methods=['POST'])
+def generate_estimate():
     """
-    Analyze bid proposal against requirements and plan quantities.
+    Generate a new bid estimate from bid documents.
     """
     try:
         data = get_session_data()
         
-        # Check if we have requirements
-        if not data.get('proposal_requirements'):
+        if not data.get('bid_docs'):
             return jsonify({
                 'success': False,
-                'error': 'No proposal documents uploaded. Please upload RFP/bid documents first.'
+                'error': 'No bid documents uploaded. Please upload bid docs first.'
             }), 400
         
-        # Check if we have a bid
-        if not data.get('bid_proposal'):
+        # Generate estimate
+        analyzer = BidAnalyzer()
+        estimate = analyzer.start_proposal(data['bid_docs'])
+        
+        # Store in session
+        data['estimate'] = estimate
+        
+        return jsonify({
+            'success': True,
+            'project_info': estimate.get('project_info', {}),
+            'bid_items': estimate.get('bid_items', []),
+            'summary': estimate.get('summary', {}),
+            'assumptions': estimate.get('assumptions', []),
+            'clarifications_needed': estimate.get('clarifications_needed', []),
+            'risks': estimate.get('risks', [])
+        })
+        
+    except Exception as e:
+        logger.error(f"Generate estimate error: {e}\n{traceback.format_exc()}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/analyze', methods=['POST'])
+def analyze_proposal():
+    """
+    Analyze current proposal with expert feedback.
+    """
+    try:
+        data = get_session_data()
+        
+        # Need either a current proposal or generated estimate
+        proposal_data = data.get('current_proposal') or data.get('estimate')
+        
+        if not proposal_data:
             return jsonify({
                 'success': False,
-                'error': 'No bid proposal uploaded. Please upload your working bid.'
+                'error': 'No proposal to analyze. Upload a proposal or generate an estimate first.'
             }), 400
         
         # Run analysis
         analyzer = BidAnalyzer()
+        analysis = analyzer.analyze_proposal(proposal_data, data.get('bid_docs'))
         
-        plan_quantities = None
-        if data.get('plan_quantities'):
-            plan_quantities = data['plan_quantities'].get('raw')
-        
-        analysis = analyzer.analyze_bid(
-            data['proposal_requirements'],
-            data['bid_proposal'],
-            plan_quantities
-        )
-        
-        # Get recommendations
+        # Get status and recommendations
+        status = analyzer.get_bid_status(analysis)
         recommendations = analyzer.generate_recommendations(analysis)
+        
+        analysis['status'] = status
         analysis['prioritized_recommendations'] = recommendations
         
-        # Get status
-        status = analyzer.get_bid_status(analysis)
-        analysis['status'] = status
-        
         # Store results
-        data['analysis_results'] = analysis
+        data['analysis'] = analysis
         
         # Add to history
+        project_name = data.get('bid_docs', {}).get('project_info', {}).get('project_name', 'Unknown')
         history_entry = {
             'id': str(uuid.uuid4()),
             'timestamp': datetime.now().isoformat(),
-            'project_name': data['proposal_requirements'].get('project_info', {}).get('project_name', 'Unknown'),
+            'project_name': project_name,
             'status': status,
-            'summary': analysis.get('summary', {})
+            'total_bid': analysis.get('pricing_analysis', {}).get('total_bid', 0)
         }
         data['history'].insert(0, history_entry)
-        data['history'] = data['history'][:20]  # Keep last 20
+        data['history'] = data['history'][:20]
         
         # Generate HTML report
         report_gen = ReportGenerator()
-        project_name = data['proposal_requirements'].get('project_info', {}).get('project_name', '')
         html_report = report_gen.generate_html_report(analysis, project_name)
         
         return jsonify({
             'success': True,
             'status': status,
-            'summary': analysis.get('summary', {}),
-            'critical_issues': analysis.get('critical_issues', []),
-            'warnings': analysis.get('warnings', []),
+            'overall_assessment': analysis.get('overall_assessment', {}),
+            'completeness': analysis.get('completeness', {}),
+            'pricing_analysis': analysis.get('pricing_analysis', {}),
+            'risks': analysis.get('risks', []),
             'recommendations': recommendations[:10],
-            'html_report': html_report,
-            'analysis_id': history_entry['id']
+            'bid_strategy': analysis.get('bid_strategy', {}),
+            'html_report': html_report
         })
         
     except Exception as e:
         logger.error(f"Analysis error: {e}\n{traceback.format_exc()}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
-
-
-@app.route('/api/compare-quantities', methods=['POST'])
-def compare_quantities():
-    """
-    Compare bid quantities against plan quantities.
-    """
-    try:
-        data = get_session_data()
-        
-        if not data.get('bid_proposal'):
-            return jsonify({
-                'success': False,
-                'error': 'No bid proposal uploaded'
-            }), 400
-        
-        if not data.get('plan_quantities'):
-            return jsonify({
-                'success': False,
-                'error': 'No plan quantities extracted. Please upload plan sheets first.'
-            }), 400
-        
-        # Get quantities
-        bid_items = data['bid_proposal'].get('line_items', []) or data['bid_proposal'].get('combined_line_items', [])
-        plan_items = data['plan_quantities'].get('aggregated', [])
-        
-        # Compare
-        analyzer = BidAnalyzer()
-        comparison = analyzer.compare_quantities(bid_items, plan_items)
-        
-        return jsonify({
-            'success': True,
-            'comparison': comparison
-        })
-        
-    except Exception as e:
-        logger.error(f"Comparison error: {e}\n{traceback.format_exc()}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 
 @app.route('/api/export/word', methods=['POST'])
@@ -454,19 +320,16 @@ def export_word():
     try:
         data = get_session_data()
         
-        if not data.get('analysis_results'):
+        if not data.get('analysis'):
             return jsonify({
                 'success': False,
-                'error': 'No analysis results to export. Please run analysis first.'
+                'error': 'No analysis to export. Run analysis first.'
             }), 400
         
         report_gen = ReportGenerator()
-        project_name = data.get('proposal_requirements', {}).get('project_info', {}).get('project_name', 'Bid Analysis')
+        project_name = data.get('bid_docs', {}).get('project_info', {}).get('project_name', 'Bid Analysis')
         
-        buffer = report_gen.generate_bid_analysis_report(
-            data['analysis_results'],
-            project_name
-        )
+        buffer = report_gen.generate_bid_analysis_report(data['analysis'], project_name)
         
         filename = f"{project_name.replace(' ', '_')}_Bid_Analysis_{datetime.now().strftime('%Y%m%d')}.docx"
         
@@ -484,41 +347,26 @@ def export_word():
 
 @app.route('/api/export/excel', methods=['POST'])
 def export_excel():
-    """Export quantities as Excel spreadsheet"""
+    """Export bid estimate as Excel spreadsheet"""
     try:
         data = get_session_data()
-        export_type = request.json.get('type', 'quantities') if request.is_json else 'quantities'
         
-        report_gen = ReportGenerator()
-        project_name = data.get('proposal_requirements', {}).get('project_info', {}).get('project_name', 'Bid')
+        # Get items from estimate or proposal
+        estimate = data.get('estimate') or data.get('current_proposal')
         
-        if export_type == 'comparison' and data.get('plan_quantities') and data.get('bid_proposal'):
-            # Export comparison
-            analyzer = BidAnalyzer()
-            bid_items = data['bid_proposal'].get('line_items', []) or data['bid_proposal'].get('combined_line_items', [])
-            plan_items = data['plan_quantities'].get('aggregated', [])
-            comparison = analyzer.compare_quantities(bid_items, plan_items)
-            
-            buffer = report_gen.generate_comparison_excel(comparison, project_name)
-            filename = f"{project_name.replace(' ', '_')}_Quantity_Comparison_{datetime.now().strftime('%Y%m%d')}.xlsx"
-            
-        elif data.get('plan_quantities'):
-            # Export plan quantities
-            quantities = data['plan_quantities'].get('aggregated', [])
-            buffer = report_gen.generate_quantity_excel(quantities, project_name)
-            filename = f"{project_name.replace(' ', '_')}_Quantities_{datetime.now().strftime('%Y%m%d')}.xlsx"
-            
-        elif data.get('bid_proposal'):
-            # Export bid quantities
-            items = data['bid_proposal'].get('line_items', []) or data['bid_proposal'].get('combined_line_items', [])
-            buffer = report_gen.generate_quantity_excel(items, project_name)
-            filename = f"{project_name.replace(' ', '_')}_Bid_Items_{datetime.now().strftime('%Y%m%d')}.xlsx"
-            
-        else:
+        if not estimate:
             return jsonify({
                 'success': False,
-                'error': 'No data to export'
+                'error': 'No estimate to export. Generate or upload a proposal first.'
             }), 400
+        
+        report_gen = ReportGenerator()
+        project_name = data.get('bid_docs', {}).get('project_info', {}).get('project_name', 'Bid')
+        
+        items = estimate.get('bid_items', []) or estimate.get('line_items', [])
+        buffer = report_gen.generate_bid_excel(items, project_name, estimate.get('summary', {}))
+        
+        filename = f"{project_name.replace(' ', '_')}_Bid_Estimate_{datetime.now().strftime('%Y%m%d')}.xlsx"
         
         return send_file(
             buffer,
@@ -532,13 +380,18 @@ def export_excel():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
-@app.route('/api/history', methods=['GET'])
-def get_history():
-    """Get analysis history for current session"""
+@app.route('/api/status', methods=['GET'])
+def get_status():
+    """Get current session status"""
     data = get_session_data()
+    
     return jsonify({
         'success': True,
-        'history': data.get('history', [])
+        'has_bid_docs': data.get('bid_docs') is not None,
+        'has_proposal': data.get('current_proposal') is not None,
+        'has_estimate': data.get('estimate') is not None,
+        'has_analysis': data.get('analysis') is not None,
+        'project_name': data.get('bid_docs', {}).get('project_info', {}).get('project_name', '') if data.get('bid_docs') else ''
     })
 
 
@@ -548,28 +401,23 @@ def clear_session():
     sid = get_session_id()
     if sid in session_data:
         session_data[sid] = {
-            'proposal_requirements': None,
-            'bid_proposal': None,
-            'plan_quantities': None,
-            'analysis_results': None,
-            'history': session_data[sid].get('history', [])  # Keep history
+            'bid_docs': None,
+            'current_proposal': None,
+            'estimate': None,
+            'analysis': None,
+            'history': session_data[sid].get('history', [])
         }
     
     return jsonify({'success': True, 'message': 'Session cleared'})
 
 
-@app.route('/api/status', methods=['GET'])
-def get_status():
-    """Get current session status - what's been uploaded"""
+@app.route('/api/history', methods=['GET'])
+def get_history():
+    """Get analysis history"""
     data = get_session_data()
-    
     return jsonify({
         'success': True,
-        'has_proposal_docs': data.get('proposal_requirements') is not None,
-        'has_bid_proposal': data.get('bid_proposal') is not None,
-        'has_plan_quantities': data.get('plan_quantities') is not None,
-        'has_analysis': data.get('analysis_results') is not None,
-        'project_name': data.get('proposal_requirements', {}).get('project_info', {}).get('project_name', '') if data.get('proposal_requirements') else ''
+        'history': data.get('history', [])
     })
 
 
