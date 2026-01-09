@@ -214,62 +214,36 @@ def parse_current_proposal():
                 pass
 
 
-@app.route('/api/generate-estimate', methods=['POST'])
-def generate_estimate():
+@app.route('/api/analyze', methods=['POST'])
+def analyze_bid():
     """
-    Generate a new bid estimate from bid documents.
+    Analyze bid documents and/or proposal with expert feedback.
+    Works with just bid docs - no proposal required.
     """
     try:
         data = get_session_data()
         
+        # Check if we have bid docs
         if not data.get('bid_docs'):
             return jsonify({
                 'success': False,
                 'error': 'No bid documents uploaded. Please upload bid docs first.'
             }), 400
         
-        # Generate estimate
+        # Run analysis using the bid estimator
+        estimator = BidEstimator()
         analyzer = BidAnalyzer()
-        estimate = analyzer.start_proposal(data['bid_docs'])
+        report_gen = ReportGenerator()
         
-        # Store in session
+        # Generate estimate from bid docs
+        estimate = analyzer.start_proposal(data['bid_docs'])
         data['estimate'] = estimate
         
-        return jsonify({
-            'success': True,
-            'project_info': estimate.get('project_info', {}),
-            'bid_items': estimate.get('bid_items', []),
-            'summary': estimate.get('summary', {}),
-            'assumptions': estimate.get('assumptions', []),
-            'clarifications_needed': estimate.get('clarifications_needed', []),
-            'risks': estimate.get('risks', [])
-        })
+        # If we have a current proposal, analyze it against the bid docs
+        proposal_data = data.get('current_proposal') or estimate
         
-    except Exception as e:
-        logger.error(f"Generate estimate error: {e}\n{traceback.format_exc()}")
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-
-@app.route('/api/analyze', methods=['POST'])
-def analyze_proposal():
-    """
-    Analyze current proposal with expert feedback.
-    """
-    try:
-        data = get_session_data()
-        
-        # Need either a current proposal or generated estimate
-        proposal_data = data.get('current_proposal') or data.get('estimate')
-        
-        if not proposal_data:
-            return jsonify({
-                'success': False,
-                'error': 'No proposal to analyze. Upload a proposal or generate an estimate first.'
-            }), 400
-        
-        # Run analysis
-        analyzer = BidAnalyzer()
-        analysis = analyzer.analyze_proposal(proposal_data, data.get('bid_docs'))
+        # Run expert analysis
+        analysis = analyzer.analyze_proposal(proposal_data, data['bid_docs'])
         
         # Get status and recommendations
         status = analyzer.get_bid_status(analysis)
@@ -277,24 +251,24 @@ def analyze_proposal():
         
         analysis['status'] = status
         analysis['prioritized_recommendations'] = recommendations
+        analysis['estimate'] = estimate
         
         # Store results
         data['analysis'] = analysis
         
         # Add to history
-        project_name = data.get('bid_docs', {}).get('project_info', {}).get('project_name', 'Unknown')
+        project_name = data['bid_docs'].get('project_info', {}).get('project_name', 'Unknown Project')
         history_entry = {
             'id': str(uuid.uuid4()),
             'timestamp': datetime.now().isoformat(),
             'project_name': project_name,
             'status': status,
-            'total_bid': analysis.get('pricing_analysis', {}).get('total_bid', 0)
+            'total_bid': estimate.get('summary', {}).get('total_bid', 0)
         }
         data['history'].insert(0, history_entry)
         data['history'] = data['history'][:20]
         
         # Generate HTML report
-        report_gen = ReportGenerator()
         html_report = report_gen.generate_html_report(analysis, project_name)
         
         return jsonify({
@@ -306,11 +280,44 @@ def analyze_proposal():
             'risks': analysis.get('risks', []),
             'recommendations': recommendations[:10],
             'bid_strategy': analysis.get('bid_strategy', {}),
-            'html_report': html_report
+            'estimate': estimate,
+            'html_report': html_report,
+            'project_name': project_name
         })
         
     except Exception as e:
         logger.error(f"Analysis error: {e}\n{traceback.format_exc()}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/export/pdf', methods=['POST'])
+def export_pdf():
+    """Export analysis report as PDF"""
+    try:
+        data = get_session_data()
+        
+        if not data.get('analysis'):
+            return jsonify({
+                'success': False,
+                'error': 'No analysis to export. Run analysis first.'
+            }), 400
+        
+        report_gen = ReportGenerator()
+        project_name = data.get('bid_docs', {}).get('project_info', {}).get('project_name', 'Bid Analysis')
+        
+        buffer = report_gen.generate_pdf_report(data['analysis'], project_name)
+        
+        filename = f"{project_name.replace(' ', '_')}_Bid_Analysis_{datetime.now().strftime('%Y%m%d')}.pdf"
+        
+        return send_file(
+            buffer,
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name=filename
+        )
+        
+    except Exception as e:
+        logger.error(f"PDF export error: {e}\n{traceback.format_exc()}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
@@ -351,20 +358,26 @@ def export_excel():
     try:
         data = get_session_data()
         
-        # Get items from estimate or proposal
-        estimate = data.get('estimate') or data.get('current_proposal')
+        # Get items from estimate, analysis, or bid docs
+        estimate = data.get('analysis', {}).get('estimate') or data.get('estimate') or data.get('current_proposal')
         
         if not estimate:
-            return jsonify({
-                'success': False,
-                'error': 'No estimate to export. Generate or upload a proposal first.'
-            }), 400
+            # Try to get line items from bid docs
+            bid_docs = data.get('bid_docs')
+            if bid_docs:
+                items = bid_docs.get('line_items', [])
+                project_name = bid_docs.get('project_info', {}).get('project_name', 'Bid')
+            else:
+                return jsonify({
+                    'success': False,
+                    'error': 'No data to export. Upload bid docs or run analysis first.'
+                }), 400
+        else:
+            items = estimate.get('bid_items', []) or estimate.get('line_items', [])
+            project_name = data.get('bid_docs', {}).get('project_info', {}).get('project_name', 'Bid')
         
         report_gen = ReportGenerator()
-        project_name = data.get('bid_docs', {}).get('project_info', {}).get('project_name', 'Bid')
-        
-        items = estimate.get('bid_items', []) or estimate.get('line_items', [])
-        buffer = report_gen.generate_bid_excel(items, project_name, estimate.get('summary', {}))
+        buffer = report_gen.generate_bid_excel(items, project_name, estimate.get('summary', {}) if estimate else {})
         
         filename = f"{project_name.replace(' ', '_')}_Bid_Estimate_{datetime.now().strftime('%Y%m%d')}.xlsx"
         
