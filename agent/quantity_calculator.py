@@ -190,9 +190,15 @@ Only return the JSON object, no other text."""
 
     def __init__(self, api_key: Optional[str] = None):
         """Initialize the bid estimator with OpenAI API key."""
-        self.api_key = api_key or os.environ.get('OPENAI_API_KEY') or os.environ.get('OPENAI_KEY')
+        self.api_key = (
+            api_key or 
+            os.environ.get('OPENAI_API_KEY') or 
+            os.environ.get('OPENAI_KEY') or
+            os.environ.get('BP-OPEN_API_KEY') or
+            os.environ.get('BP_OPEN_API_KEY')
+        )
         if not self.api_key:
-            raise ValueError("OpenAI API key not found. Set OPENAI_API_KEY environment variable.")
+            raise ValueError("OpenAI API key not found. Set OPENAI_API_KEY or BP-OPEN_API_KEY environment variable.")
         self.client = OpenAI(api_key=self.api_key.strip())
         self.model = "gpt-4o"
     

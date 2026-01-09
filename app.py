@@ -103,7 +103,12 @@ def index():
 @app.route('/health')
 def health():
     """Health check endpoint"""
-    has_key = bool(os.environ.get('OPENAI_API_KEY') or os.environ.get('OPENAI_KEY'))
+    has_key = bool(
+        os.environ.get('OPENAI_API_KEY') or 
+        os.environ.get('OPENAI_KEY') or
+        os.environ.get('BP-OPEN_API_KEY') or
+        os.environ.get('BP_OPEN_API_KEY')
+    )
     return jsonify({
         'status': 'healthy', 
         'service': 'bid-proposal-agent',
