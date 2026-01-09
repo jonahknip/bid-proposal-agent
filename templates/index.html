@@ -230,8 +230,7 @@
             <div class="analysis-header">
                 <h2 style="margin: 0;"><span style="color: #C8102E; margin-right: 8px;">&#128202;</span> Analysis Results</h2>
                 <div class="btn-group">
-                    <button class="btn btn-sm" id="exportPdfBtn">Export PDF</button>
-                    <button class="btn btn-sm btn-secondary" id="exportWordBtn">Export Word</button>
+                    <button class="btn btn-sm" id="exportWordBtn">Export Word</button>
                     <button class="btn btn-sm btn-secondary" id="exportExcelBtn">Export Excel</button>
                     <button class="btn btn-sm btn-outline" id="newAnalysisBtn">Start New</button>
                 </div>
@@ -447,32 +446,6 @@
                 tab.classList.add('active');
                 document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
             });
-        });
-
-        // Export PDF
-        document.getElementById('exportPdfBtn').addEventListener('click', async () => {
-            const btn = document.getElementById('exportPdfBtn');
-            btn.disabled = true;
-            btn.textContent = 'Exporting...';
-            try {
-                const response = await fetch('/api/export/pdf', { method: 'POST' });
-                if (response.ok) {
-                    const blob = await response.blob();
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = 'Bid_Analysis.pdf';
-                    a.click();
-                } else {
-                    const data = await response.json();
-                    alert(`Export failed: ${data.error}`);
-                }
-            } catch (err) {
-                alert(`Error: ${err.message}`);
-            } finally {
-                btn.disabled = false;
-                btn.textContent = 'Export PDF';
-            }
         });
 
         // Export Word
