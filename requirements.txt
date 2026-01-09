@@ -1,0 +1,23 @@
+# Web Framework
+flask>=3.0.0
+gunicorn>=21.0.0
+
+# HTTP requests
+requests>=2.31.0
+
+# PDF Processing
+PyMuPDF>=1.23.0
+Pillow>=10.0.0
+
+# AI/LLM
+openai>=1.0.0
+
+# Excel Processing
+openpyxl>=3.1.0
+
+# Document Export
+python-docx>=1.1.0
+
+# Utilities
+python-dotenv>=1.0.0
+werkzeug>=3.0.0

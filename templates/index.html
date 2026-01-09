@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bid Proposal Agent - Abonmarche</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='46' fill='none' stroke='%231B365D' stroke-width='4'/><text x='50' y='65' font-size='40' font-weight='bold' fill='%23C8102E' text-anchor='middle'>$</text></svg>">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #E3F2FD;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+
+        .logo-icon {
+            width: 50px;
+            height: 50px;
+        }
+
+        h1 {
+            color: #1A1A1A;
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        h1 span {
+            color: #C8102E;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1rem;
+        }
+
+        .brand {
+            color: #C8102E;
+            font-weight: 600;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            margin-top: 5px;
+        }
+
+        /* Two-column layout */
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 900px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 25px;
+            margin-bottom: 20px;
+            border-top: 4px solid #C8102E;
+        }
+
+        .card.secondary {
+            border-top-color: #1B365D;
+        }
+
+        .card h2 {
+            color: #1B365D;
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card h2 .icon {
+            color: #C8102E;
+            font-size: 1.4rem;
+        }
+
+        .card h2 .step-number {
+            background: #1B365D;
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+        }
+
+        .card-description {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .file-upload {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 30px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #F8F9FA;
+        }
+
+        .file-upload:hover {
+            border-color: #C8102E;
+            background: #FFF5F5;
+        }
+
+        .file-upload.dragover {
+            border-color: #C8102E;
+            background: #FFF0F0;
+        }
+
+        .file-upload.has-files {
+            border-color: #28a745;
+            background: #F0FFF0;
+        }
+
+        .file-upload input {
+            display: none;
+        }
+
+        .file-upload .upload-icon {
+            font-size: 2rem;
+            color: #999;
+            margin-bottom: 10px;
+        }
+
+        .file-upload .upload-text {
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        .file-upload .file-types {
+            color: #999;
+            font-size: 0.8rem;
+            margin-top: 8px;
+        }
+
+        .file-list {
+            margin-top: 15px;
+            font-size: 0.9rem;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: #F5F5F5;
+            border-radius: 4px;
+            margin-bottom: 5px;
+        }
+
+        .file-item .remove {
+            margin-left: auto;
+            color: #C8102E;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #C8102E;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            text-align: center;
+        }
+
+        .btn:hover:not(:disabled) {
+            background: #A00D25;
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .btn-block {
+            width: 100%;
+            margin-top: 15px;
+        }
+
+        .btn-secondary {
+            background: #1B365D;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: #132744;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid #C8102E;
+            color: #C8102E;
+        }
+
+        .btn-outline:hover:not(:disabled) {
+            background: #C8102E;
+            color: white;
+        }
+
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 0.85rem;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+        }
+
+        .status-indicator.pending {
+            background: #F5F5F5;
+            color: #666;
+        }
+
+        .status-indicator.ready {
+            background: #D4EDDA;
+            color: #155724;
+        }
+
+        .status-indicator.processing {
+            background: #FFF3CD;
+            color: #856404;
+        }
+
+        .status-indicator .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #C8102E;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Analysis Section */
+        .analysis-card {
+            grid-column: 1 / -1;
+        }
+
+        .analysis-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .status-badge {
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .status-badge.ready {
+            background: #D4EDDA;
+            color: #155724;
+        }
+
+        .status-badge.warning {
+            background: #FFF3CD;
+            color: #856404;
+        }
+
+        .status-badge.error {
+            background: #F8D7DA;
+            color: #721C24;
+        }
+
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 600px) {
+            .score-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .score-box {
+            text-align: center;
+            padding: 20px;
+            border-radius: 8px;
+            background: #F8F9FA;
+        }
+
+        .score-box.primary {
+            background: #E3F2FD;
+            border: 2px solid #1B365D;
+        }
+
+        .score-box.success {
+            background: #D4EDDA;
+            border: 2px solid #28A745;
+        }
+
+        .score-box.danger {
+            background: #F8D7DA;
+            border: 2px solid #DC3545;
+        }
+
+        .score-box.warning {
+            background: #FFF3CD;
+            border: 2px solid #FFC107;
+        }
+
+        .score-box .number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: inherit;
+        }
+
+        .score-box .label {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 5px;
+            text-transform: uppercase;
+        }
+
+        .report-content {
+            background: #FAFAFA;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .issues-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .issues-list li {
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .issues-list li.critical {
+            background: #F8D7DA;
+            border-left: 4px solid #DC3545;
+        }
+
+        .issues-list li.warning {
+            background: #FFF3CD;
+            border-left: 4px solid #FFC107;
+        }
+
+        .issues-list li.info {
+            background: #E3F2FD;
+            border-left: 4px solid #1B365D;
+        }
+
+        .issues-list .icon {
+            font-size: 1.2rem;
+        }
+
+        /* Data table */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+            margin-top: 15px;
+        }
+
+        .data-table th {
+            background: #1B365D;
+            color: white;
+            padding: 12px 10px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .data-table td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .data-table tr:hover {
+            background: #F5F5F5;
+        }
+
+        .data-table .number {
+            text-align: right;
+            font-family: monospace;
+        }
+
+        .data-table .variance-positive {
+            color: #E67E22;
+        }
+
+        .data-table .variance-negative {
+            color: #DC3545;
+        }
+
+        /* Progress steps */
+        .progress-steps {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            padding: 0 20px;
+        }
+
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+            position: relative;
+        }
+
+        .step:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            width: 100%;
+            height: 2px;
+            background: #ddd;
+            z-index: 0;
+        }
+
+        .step.complete:not(:last-child)::after {
+            background: #28A745;
+        }
+
+        .step-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: white;
+            z-index: 1;
+            position: relative;
+        }
+
+        .step.complete .step-circle {
+            background: #28A745;
+        }
+
+        .step.active .step-circle {
+            background: #C8102E;
+        }
+
+        .step-label {
+            margin-top: 8px;
+            font-size: 0.8rem;
+            color: #666;
+            text-align: center;
+        }
+
+        footer {
+            text-align: center;
+            color: #999;
+            font-size: 0.85rem;
+            margin-top: 30px;
+            padding: 20px;
+        }
+
+        footer a {
+            color: #C8102E;
+            text-decoration: none;
+        }
+
+        /* Tabs for line items */
+        .tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #ddd;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: #666;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.2s;
+        }
+
+        .tab:hover {
+            color: #1B365D;
+        }
+
+        .tab.active {
+            color: #1B365D;
+            border-bottom-color: #C8102E;
+            font-weight: 600;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .empty-state .icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        /* Info box */
+        .info-box {
+            background: #E3F2FD;
+            border-left: 4px solid #1B365D;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 0 6px 6px 0;
+            font-size: 0.9rem;
+            color: #1B365D;
+        }
+
+        .info-box strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <svg class="logo-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="50" cy="50" r="46" fill="none" stroke="#1B365D" stroke-width="4"/>
+                    <text x="50" y="68" font-size="45" font-weight="bold" fill="#C8102E" text-anchor="middle">$</text>
+                </svg>
+                <h1>Bid <span>Proposal</span> Agent</h1>
+            </div>
+            <p class="subtitle">Civil Engineering Bid Analysis Tool</p>
+            <p class="brand">ABONMARCHE</p>
+        </header>
+
+        <!-- Progress Steps -->
+        <div class="progress-steps">
+            <div class="step" id="step1">
+                <div class="step-circle">1</div>
+                <div class="step-label">Upload RFP/Bid Docs</div>
+            </div>
+            <div class="step" id="step2">
+                <div class="step-circle">2</div>
+                <div class="step-label">Upload Your Bid</div>
+            </div>
+            <div class="step" id="step3">
+                <div class="step-circle">3</div>
+                <div class="step-label">Plan Quantities (Optional)</div>
+            </div>
+            <div class="step" id="step4">
+                <div class="step-circle">4</div>
+                <div class="step-label">Analyze</div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Left Column: Proposal Documents -->
+            <div class="card">
+                <h2>
+                    <span class="step-number">1</span>
+                    Proposal Documents
+                </h2>
+                <p class="card-description">
+                    Upload the RFP, bid documents, or bid schedule from the owner/agency. 
+                    The AI will extract line items, quantities, and requirements.
+                </p>
+                
+                <div class="status-indicator pending" id="proposalStatus">
+                    <span class="dot"></span>
+                    <span>No documents uploaded</span>
+                </div>
+
+                <div class="file-upload" id="proposalUpload">
+                    <input type="file" id="proposalFiles" multiple accept=".pdf,.xlsx,.xls,.xlsm">
+                    <div class="upload-icon">&#128196;</div>
+                    <div class="upload-text">Click to select or drag & drop files</div>
+                    <div class="file-types">Supported: PDF, Excel (.xlsx, .xls)</div>
+                </div>
+                
+                <div class="file-list" id="proposalFileList"></div>
+                
+                <button class="btn btn-block" id="parseProposalBtn" disabled>
+                    Parse Proposal Documents
+                </button>
+            </div>
+
+            <!-- Right Column: Bid Proposal -->
+            <div class="card secondary">
+                <h2>
+                    <span class="step-number">2</span>
+                    Your Bid Proposal
+                </h2>
+                <p class="card-description">
+                    Upload your working bid proposal spreadsheet or PDF. 
+                    This will be compared against the requirements.
+                </p>
+                
+                <div class="status-indicator pending" id="bidStatus">
+                    <span class="dot"></span>
+                    <span>No bid uploaded</span>
+                </div>
+
+                <div class="file-upload" id="bidUpload">
+                    <input type="file" id="bidFiles" multiple accept=".pdf,.xlsx,.xls,.xlsm">
+                    <div class="upload-icon">&#128203;</div>
+                    <div class="upload-text">Click to select or drag & drop files</div>
+                    <div class="file-types">Supported: PDF, Excel (.xlsx, .xls)</div>
+                </div>
+                
+                <div class="file-list" id="bidFileList"></div>
+                
+                <button class="btn btn-secondary btn-block" id="parseBidBtn" disabled>
+                    Parse Bid Proposal
+                </button>
+            </div>
+
+            <!-- Plan Quantities (Optional) -->
+            <div class="card" style="grid-column: 1 / -1;">
+                <h2>
+                    <span class="step-number">3</span>
+                    Plan Quantities
+                    <span style="font-size: 0.8rem; font-weight: normal; color: #666;">(Optional)</span>
+                </h2>
+                <p class="card-description">
+                    Upload plan sheets to verify quantities using AI vision analysis. 
+                    The system will extract quantities for earthwork, paving, utilities, structures, and more.
+                </p>
+
+                <div class="info-box">
+                    <strong>Quantity Categories Extracted:</strong>
+                    Earthwork (CY) | Paving (TON/SY) | Utilities (LF/EA) | Structures (SF/EA) | 
+                    Survey (AC/LF) | Erosion Control | Traffic Control | Landscaping
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px;">
+                    <div>
+                        <div class="file-upload" id="planUpload">
+                            <input type="file" id="planFiles" multiple accept=".pdf">
+                            <div class="upload-icon">&#128506;</div>
+                            <div class="upload-text">Upload plan sheets (PDF only)</div>
+                            <div class="file-types">AI will analyze sheets and extract quantities</div>
+                        </div>
+                        <div class="file-list" id="planFileList"></div>
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 8px; font-weight: 500;">Max Sheets to Analyze</label>
+                        <select id="maxSheets" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                            <option value="5">5 sheets</option>
+                            <option value="10" selected>10 sheets</option>
+                            <option value="20">20 sheets</option>
+                            <option value="">All sheets</option>
+                        </select>
+                        <p style="font-size: 0.8rem; color: #666; margin-top: 8px;">
+                            More sheets = longer processing time
+                        </p>
+                        <button class="btn btn-outline btn-block" id="extractQuantitiesBtn" disabled>
+                            Extract Quantities
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analysis Section -->
+            <div class="card analysis-card" id="analysisSection" style="display: none;">
+                <div class="analysis-header">
+                    <h2 style="margin: 0;">
+                        <span class="icon">&#128202;</span>
+                        Bid Analysis Results
+                    </h2>
+                    <div class="btn-group">
+                        <button class="btn btn-sm btn-secondary" id="exportWordBtn">Export Word</button>
+                        <button class="btn btn-sm btn-secondary" id="exportExcelBtn">Export Excel</button>
+                        <button class="btn btn-sm btn-outline" id="newAnalysisBtn">New Analysis</button>
+                    </div>
+                </div>
+
+                <div id="statusBadgeContainer"></div>
+
+                <div class="score-grid" id="scoreGrid">
+                    <!-- Populated by JS -->
+                </div>
+
+                <!-- Tabs -->
+                <div class="tabs">
+                    <button class="tab active" data-tab="report">Report</button>
+                    <button class="tab" data-tab="issues">Issues & Warnings</button>
+                    <button class="tab" data-tab="recommendations">Recommendations</button>
+                    <button class="tab" data-tab="lineItems">Line Items</button>
+                </div>
+
+                <div class="tab-content active" id="tab-report">
+                    <div class="report-content" id="reportContent">
+                        <!-- HTML report injected here -->
+                    </div>
+                </div>
+
+                <div class="tab-content" id="tab-issues">
+                    <ul class="issues-list" id="issuesList">
+                        <!-- Issues populated here -->
+                    </ul>
+                </div>
+
+                <div class="tab-content" id="tab-recommendations">
+                    <ul class="issues-list" id="recommendationsList">
+                        <!-- Recommendations populated here -->
+                    </ul>
+                </div>
+
+                <div class="tab-content" id="tab-lineItems">
+                    <div id="lineItemsContent">
+                        <!-- Line items table -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analyze Button -->
+            <div style="grid-column: 1 / -1; text-align: center; padding: 20px;">
+                <button class="btn" id="analyzeBtn" disabled style="padding: 15px 50px; font-size: 1.1rem;">
+                    <span class="step-number" style="display: inline-block; margin-right: 10px;">4</span>
+                    Analyze Bid Proposal
+                </button>
+                <p style="color: #666; font-size: 0.85rem; margin-top: 10px;">
+                    Upload proposal documents and your bid to enable analysis
+                </p>
+            </div>
+        </div>
+
+        <footer>
+            <p>Bid Proposal Agent &bull; Internal Use Only</p>
+            <p>Questions? Contact <a href="https://teams.microsoft.com/l/chat/0/0?users=jknip@abonmarche.com" target="_blank">Jonah Knip</a></p>
+        </footer>
+    </div>
+
+    <script>
+        // File upload handling
+        const proposalUpload = document.getElementById('proposalUpload');
+        const proposalFiles = document.getElementById('proposalFiles');
+        const proposalFileList = document.getElementById('proposalFileList');
+        const parseProposalBtn = document.getElementById('parseProposalBtn');
+        
+        const bidUpload = document.getElementById('bidUpload');
+        const bidFiles = document.getElementById('bidFiles');
+        const bidFileList = document.getElementById('bidFileList');
+        const parseBidBtn = document.getElementById('parseBidBtn');
+        
+        const planUpload = document.getElementById('planUpload');
+        const planFiles = document.getElementById('planFiles');
+        const planFileList = document.getElementById('planFileList');
+        const extractQuantitiesBtn = document.getElementById('extractQuantitiesBtn');
+        
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const analysisSection = document.getElementById('analysisSection');
+
+        // State
+        let proposalData = null;
+        let bidData = null;
+        let quantityData = null;
+        let analysisResults = null;
+
+        // Setup file uploads
+        setupFileUpload(proposalUpload, proposalFiles, proposalFileList, parseProposalBtn);
+        setupFileUpload(bidUpload, bidFiles, bidFileList, parseBidBtn);
+        setupFileUpload(planUpload, planFiles, planFileList, extractQuantitiesBtn);
+
+        function setupFileUpload(uploadDiv, fileInput, fileListDiv, btn) {
+            uploadDiv.addEventListener('click', () => fileInput.click());
+            
+            uploadDiv.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadDiv.classList.add('dragover');
+            });
+            
+            uploadDiv.addEventListener('dragleave', () => {
+                uploadDiv.classList.remove('dragover');
+            });
+            
+            uploadDiv.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadDiv.classList.remove('dragover');
+                fileInput.files = e.dataTransfer.files;
+                updateFileList(fileInput, fileListDiv, uploadDiv, btn);
+            });
+            
+            fileInput.addEventListener('change', () => {
+                updateFileList(fileInput, fileListDiv, uploadDiv, btn);
+            });
+        }
+
+        function updateFileList(fileInput, fileListDiv, uploadDiv, btn) {
+            fileListDiv.innerHTML = '';
+            
+            if (fileInput.files.length > 0) {
+                uploadDiv.classList.add('has-files');
+                btn.disabled = false;
+                
+                Array.from(fileInput.files).forEach((file, index) => {
+                    const div = document.createElement('div');
+                    div.className = 'file-item';
+                    div.innerHTML = `
+                        <span>&#128196;</span>
+                        <span>${file.name}</span>
+                        <span style="color: #999; font-size: 0.8rem;">(${formatSize(file.size)})</span>
+                    `;
+                    fileListDiv.appendChild(div);
+                });
+            } else {
+                uploadDiv.classList.remove('has-files');
+                btn.disabled = true;
+            }
+        }
+
+        function formatSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+
+        // Parse Proposal Documents
+        parseProposalBtn.addEventListener('click', async () => {
+            const formData = new FormData();
+            Array.from(proposalFiles.files).forEach(file => {
+                formData.append('files', file);
+            });
+
+            parseProposalBtn.disabled = true;
+            parseProposalBtn.innerHTML = '<span class="spinner"></span>Parsing documents...';
+            updateStatus('proposalStatus', 'processing', 'Processing documents...');
+
+            try {
+                const response = await fetch('/api/parse-proposal', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    proposalData = data;
+                    updateStatus('proposalStatus', 'ready', `${data.line_item_count} line items extracted`);
+                    updateStep(1, true);
+                    checkAnalyzeReady();
+                } else {
+                    updateStatus('proposalStatus', 'pending', `Error: ${data.error}`);
+                }
+            } catch (err) {
+                updateStatus('proposalStatus', 'pending', `Error: ${err.message}`);
+            } finally {
+                parseProposalBtn.disabled = false;
+                parseProposalBtn.textContent = 'Parse Proposal Documents';
+            }
+        });
+
+        // Parse Bid Proposal
+        parseBidBtn.addEventListener('click', async () => {
+            const formData = new FormData();
+            Array.from(bidFiles.files).forEach(file => {
+                formData.append('files', file);
+            });
+
+            parseBidBtn.disabled = true;
+            parseBidBtn.innerHTML = '<span class="spinner"></span>Parsing bid...';
+            updateStatus('bidStatus', 'processing', 'Processing bid...');
+
+            try {
+                const response = await fetch('/api/parse-bid', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    bidData = data;
+                    updateStatus('bidStatus', 'ready', `${data.line_item_count} items in bid`);
+                    updateStep(2, true);
+                    checkAnalyzeReady();
+                } else {
+                    updateStatus('bidStatus', 'pending', `Error: ${data.error}`);
+                }
+            } catch (err) {
+                updateStatus('bidStatus', 'pending', `Error: ${err.message}`);
+            } finally {
+                parseBidBtn.disabled = false;
+                parseBidBtn.textContent = 'Parse Bid Proposal';
+            }
+        });
+
+        // Extract Quantities
+        extractQuantitiesBtn.addEventListener('click', async () => {
+            const formData = new FormData();
+            Array.from(planFiles.files).forEach(file => {
+                formData.append('files', file);
+            });
+            
+            const maxSheets = document.getElementById('maxSheets').value;
+            if (maxSheets) {
+                formData.append('max_sheets', maxSheets);
+            }
+
+            extractQuantitiesBtn.disabled = true;
+            extractQuantitiesBtn.innerHTML = '<span class="spinner"></span>Extracting...';
+
+            try {
+                const response = await fetch('/api/extract-quantities', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    quantityData = data;
+                    updateStep(3, true);
+                    alert(`Extracted ${data.quantity_count} quantities from ${data.sheets_processed} sheets`);
+                } else {
+                    alert(`Error: ${data.error}`);
+                }
+            } catch (err) {
+                alert(`Error: ${err.message}`);
+            } finally {
+                extractQuantitiesBtn.disabled = false;
+                extractQuantitiesBtn.textContent = 'Extract Quantities';
+            }
+        });
+
+        // Analyze
+        analyzeBtn.addEventListener('click', async () => {
+            analyzeBtn.disabled = true;
+            analyzeBtn.innerHTML = '<span class="spinner"></span>Analyzing bid proposal...';
+
+            try {
+                const response = await fetch('/api/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    analysisResults = data;
+                    displayResults(data);
+                    updateStep(4, true);
+                } else {
+                    alert(`Error: ${data.error}`);
+                }
+            } catch (err) {
+                alert(`Error: ${err.message}`);
+            } finally {
+                analyzeBtn.disabled = false;
+                analyzeBtn.innerHTML = '<span class="step-number" style="display: inline-block; margin-right: 10px;">4</span>Analyze Bid Proposal';
+            }
+        });
+
+        function updateStatus(elementId, status, message) {
+            const el = document.getElementById(elementId);
+            el.className = `status-indicator ${status}`;
+            el.innerHTML = `<span class="dot"></span><span>${message}</span>`;
+        }
+
+        function updateStep(stepNum, complete) {
+            const step = document.getElementById(`step${stepNum}`);
+            if (complete) {
+                step.classList.add('complete');
+            }
+        }
+
+        function checkAnalyzeReady() {
+            if (proposalData && bidData) {
+                analyzeBtn.disabled = false;
+                document.getElementById('step4').classList.add('active');
+            }
+        }
+
+        function displayResults(data) {
+            analysisSection.style.display = 'block';
+            
+            // Status badge
+            const status = data.status;
+            const badgeClass = status.color === 'green' ? 'ready' : status.color === 'red' ? 'error' : 'warning';
+            document.getElementById('statusBadgeContainer').innerHTML = `
+                <div class="status-badge ${badgeClass}">${status.status}: ${status.message}</div>
+            `;
+
+            // Score grid
+            document.getElementById('scoreGrid').innerHTML = `
+                <div class="score-box primary">
+                    <div class="number">${status.completeness_score?.toFixed(0) || 0}%</div>
+                    <div class="label">Completeness</div>
+                </div>
+                <div class="score-box success">
+                    <div class="number">${status.accuracy_score?.toFixed(0) || 0}%</div>
+                    <div class="label">Accuracy</div>
+                </div>
+                <div class="score-box danger">
+                    <div class="number">${status.critical_issues || 0}</div>
+                    <div class="label">Critical Issues</div>
+                </div>
+                <div class="score-box warning">
+                    <div class="number">${status.warnings || 0}</div>
+                    <div class="label">Warnings</div>
+                </div>
+            `;
+
+            // HTML Report
+            document.getElementById('reportContent').innerHTML = data.html_report || '<p>No report generated</p>';
+
+            // Issues list
+            const issuesList = document.getElementById('issuesList');
+            issuesList.innerHTML = '';
+            
+            (data.critical_issues || []).forEach(issue => {
+                issuesList.innerHTML += `
+                    <li class="critical">
+                        <span class="icon">&#9888;</span>
+                        <span>${issue}</span>
+                    </li>
+                `;
+            });
+            
+            (data.warnings || []).forEach(warning => {
+                issuesList.innerHTML += `
+                    <li class="warning">
+                        <span class="icon">&#9888;</span>
+                        <span>${warning}</span>
+                    </li>
+                `;
+            });
+
+            if (issuesList.innerHTML === '') {
+                issuesList.innerHTML = '<li class="info"><span class="icon">&#10004;</span><span>No issues found</span></li>';
+            }
+
+            // Recommendations
+            const recList = document.getElementById('recommendationsList');
+            recList.innerHTML = '';
+            
+            (data.recommendations || []).forEach((rec, i) => {
+                const priority = rec.priority || 'info';
+                const cls = priority === 'CRITICAL' ? 'critical' : priority === 'HIGH' ? 'warning' : 'info';
+                recList.innerHTML += `
+                    <li class="${cls}">
+                        <span class="icon">${i + 1}.</span>
+                        <div>
+                            <strong>${rec.action || rec}</strong>
+                            ${rec.reason ? `<br><small style="color: #666;">${rec.reason}</small>` : ''}
+                        </div>
+                    </li>
+                `;
+            });
+
+            // Scroll to results
+            analysisSection.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+            });
+        });
+
+        // Export buttons
+        document.getElementById('exportWordBtn').addEventListener('click', async () => {
+            const btn = document.getElementById('exportWordBtn');
+            btn.disabled = true;
+            btn.textContent = 'Exporting...';
+
+            try {
+                const response = await fetch('/api/export/word', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'Bid_Analysis_Report.docx';
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                } else {
+                    const data = await response.json();
+                    alert(`Export failed: ${data.error}`);
+                }
+            } catch (err) {
+                alert(`Export error: ${err.message}`);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Export Word';
+            }
+        });
+
+        document.getElementById('exportExcelBtn').addEventListener('click', async () => {
+            const btn = document.getElementById('exportExcelBtn');
+            btn.disabled = true;
+            btn.textContent = 'Exporting...';
+
+            try {
+                const response = await fetch('/api/export/excel', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type: quantityData ? 'comparison' : 'quantities' })
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'Bid_Quantities.xlsx';
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                } else {
+                    const data = await response.json();
+                    alert(`Export failed: ${data.error}`);
+                }
+            } catch (err) {
+                alert(`Export error: ${err.message}`);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Export Excel';
+            }
+        });
+
+        document.getElementById('newAnalysisBtn').addEventListener('click', async () => {
+            if (confirm('Start a new analysis? This will clear current data.')) {
+                await fetch('/api/clear', { method: 'POST' });
+                location.reload();
+            }
+        });
+
+        // Check initial status
+        fetch('/api/status')
+            .then(r => r.json())
+            .then(data => {
+                if (data.has_proposal_docs) {
+                    updateStatus('proposalStatus', 'ready', 'Documents loaded');
+                    updateStep(1, true);
+                    proposalData = true;
+                }
+                if (data.has_bid_proposal) {
+                    updateStatus('bidStatus', 'ready', 'Bid loaded');
+                    updateStep(2, true);
+                    bidData = true;
+                }
+                if (data.has_plan_quantities) {
+                    updateStep(3, true);
+                    quantityData = true;
+                }
+                checkAnalyzeReady();
+            });
+    </script>
+</body>
+</html>
