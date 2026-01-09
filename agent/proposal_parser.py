@@ -142,10 +142,11 @@ Only return the JSON object, no other text."""
 
     def __init__(self, api_key: Optional[str] = None):
         """Initialize the proposal parser with OpenAI API key."""
-        self.api_key = api_key or os.environ.get('OPENAI_API_KEY')
+        self.api_key = api_key or os.environ.get('OPENAI_API_KEY') or os.environ.get('OPENAI_KEY')
         if not self.api_key:
-            raise ValueError("OpenAI API key is required")
-        self.client = OpenAI(api_key=self.api_key)
+            available_keys = [k for k in os.environ.keys() if 'OPENAI' in k.upper() or 'API' in k.upper()]
+            raise ValueError(f"OpenAI API key not found. Set OPENAI_API_KEY environment variable. Found env vars with API/OPENAI: {available_keys}")
+        self.client = OpenAI(api_key=self.api_key.strip())
         self.model = "gpt-4o"
     
     def extract_text_from_pdf(self, pdf_path: str) -> str:

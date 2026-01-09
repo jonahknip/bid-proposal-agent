@@ -103,7 +103,12 @@ def index():
 @app.route('/health')
 def health():
     """Health check endpoint"""
-    return jsonify({'status': 'healthy', 'service': 'bid-proposal-agent'})
+    has_key = bool(os.environ.get('OPENAI_API_KEY') or os.environ.get('OPENAI_KEY'))
+    return jsonify({
+        'status': 'healthy', 
+        'service': 'bid-proposal-agent',
+        'openai_configured': has_key
+    })
 
 
 @app.route('/api/parse-bid-docs', methods=['POST'])
