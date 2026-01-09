@@ -16,10 +16,39 @@ from io import BytesIO
 from flask import Flask, render_template, request, jsonify, send_file, session
 from werkzeug.utils import secure_filename
 
-from agent.quantity_calculator import BidEstimator
-from agent.proposal_parser import ProposalParser
-from agent.bid_analyzer import BidAnalyzer
-from agent.report_generator import ReportGenerator
+# Lazy load heavy modules to speed up startup
+_bid_estimator = None
+_proposal_parser = None
+_bid_analyzer = None
+_report_generator = None
+
+def get_bid_estimator():
+    global _bid_estimator
+    if _bid_estimator is None:
+        from agent.quantity_calculator import BidEstimator
+        _bid_estimator = BidEstimator
+    return _bid_estimator()
+
+def get_proposal_parser():
+    global _proposal_parser
+    if _proposal_parser is None:
+        from agent.proposal_parser import ProposalParser
+        _proposal_parser = ProposalParser
+    return _proposal_parser()
+
+def get_bid_analyzer():
+    global _bid_analyzer
+    if _bid_analyzer is None:
+        from agent.bid_analyzer import BidAnalyzer
+        _bid_analyzer = BidAnalyzer
+    return _bid_analyzer()
+
+def get_report_generator():
+    global _report_generator
+    if _report_generator is None:
+        from agent.report_generator import ReportGenerator
+        _report_generator = ReportGenerator
+    return _report_generator()
 
 # Configure logging
 logging.basicConfig(
@@ -111,7 +140,7 @@ def parse_bid_documents():
             }), 400
         
         # Parse documents
-        parser = ProposalParser()
+        parser = get_proposal_parser()
         
         if len(file_paths) == 1:
             result = parser.parse_bid_document(file_paths[0])
@@ -184,7 +213,7 @@ def parse_current_proposal():
             return jsonify({'success': False, 'error': 'No valid files uploaded'}), 400
         
         # Parse using estimator
-        estimator = BidEstimator()
+        estimator = get_bid_estimator()
         result = estimator.analyze_bid_documents(file_paths)
         
         # Store in session
@@ -231,9 +260,9 @@ def analyze_bid():
             }), 400
         
         # Run analysis using the bid estimator
-        estimator = BidEstimator()
-        analyzer = BidAnalyzer()
-        report_gen = ReportGenerator()
+        estimator = get_bid_estimator()
+        analyzer = get_bid_analyzer()
+        report_gen = get_report_generator()
         
         # Generate estimate from bid docs
         estimate = analyzer.start_proposal(data['bid_docs'])
@@ -302,7 +331,7 @@ def export_pdf():
                 'error': 'No analysis to export. Run analysis first.'
             }), 400
         
-        report_gen = ReportGenerator()
+        report_gen = get_report_generator()
         project_name = data.get('bid_docs', {}).get('project_info', {}).get('project_name', 'Bid Analysis')
         
         buffer = report_gen.generate_pdf_report(data['analysis'], project_name)
@@ -333,7 +362,7 @@ def export_word():
                 'error': 'No analysis to export. Run analysis first.'
             }), 400
         
-        report_gen = ReportGenerator()
+        report_gen = get_report_generator()
         project_name = data.get('bid_docs', {}).get('project_info', {}).get('project_name', 'Bid Analysis')
         
         buffer = report_gen.generate_bid_analysis_report(data['analysis'], project_name)
@@ -376,7 +405,7 @@ def export_excel():
             items = estimate.get('bid_items', []) or estimate.get('line_items', [])
             project_name = data.get('bid_docs', {}).get('project_info', {}).get('project_name', 'Bid')
         
-        report_gen = ReportGenerator()
+        report_gen = get_report_generator()
         buffer = report_gen.generate_bid_excel(items, project_name, estimate.get('summary', {}) if estimate else {})
         
         filename = f"{project_name.replace(' ', '_')}_Bid_Estimate_{datetime.now().strftime('%Y%m%d')}.xlsx"
