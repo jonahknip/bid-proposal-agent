@@ -13,7 +13,7 @@
             min-height: 100vh;
             padding: 20px;
         }
-        .container { max-width: 1100px; margin: 0 auto; }
+        .container { max-width: 900px; margin: 0 auto; }
         header { text-align: center; margin-bottom: 30px; }
         .logo { display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 10px; }
         .logo-icon { width: 50px; height: 50px; }
@@ -30,7 +30,6 @@
             margin-bottom: 20px;
             border-top: 4px solid #C8102E;
         }
-        .card.secondary { border-top-color: #1B365D; }
         .card h2 {
             color: #1B365D;
             font-size: 1.2rem;
@@ -110,9 +109,6 @@
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        .main-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        @media (max-width: 800px) { .main-grid { grid-template-columns: 1fr; } }
-
         .info-box {
             background: #E3F2FD; border-left: 4px solid #1B365D;
             padding: 15px; margin-bottom: 15px; border-radius: 0 6px 6px 0;
@@ -183,84 +179,49 @@
 
         <div class="info-box">
             <strong>How It Works</strong>
-            Upload bid documents (RFP, bid schedule, specs) to extract requirements and generate estimates.
-            Optionally upload an existing proposal for expert review. Get material, labor, and equipment cost breakdowns.
+            Upload bid documents (RFP, bid schedule, specs) and get an expert analysis with material, labor, and equipment cost breakdowns. Export to PDF, Word, or Excel.
         </div>
 
-        <div class="main-grid">
-            <!-- Bid Documents -->
-            <div class="card">
-                <h2><span class="step-number">1</span> Bid Documents</h2>
-                <p class="card-description">
-                    Upload the RFP, bid schedule, specifications, or any bid documents from the owner/agency.
-                    AI will extract line items, quantities, requirements, and specifications.
-                </p>
-                
-                <div class="status-indicator pending" id="bidDocsStatus">
-                    <span class="dot"></span>
-                    <span>No documents uploaded</span>
-                </div>
-
-                <div class="file-upload" id="bidDocsUpload">
-                    <input type="file" id="bidDocsFiles" multiple accept=".pdf,.xlsx,.xls,.xlsm">
-                    <div class="upload-icon">&#128196;</div>
-                    <div class="upload-text">Click to select or drag & drop</div>
-                    <div class="file-types">PDF, Excel (.xlsx, .xls)</div>
-                </div>
-                
-                <div class="file-list" id="bidDocsFileList"></div>
-                
-                <button class="btn btn-block" id="parseBidDocsBtn" disabled>
-                    Parse Bid Documents
-                </button>
-            </div>
-
-            <!-- Current Proposal (Optional) -->
-            <div class="card secondary">
-                <h2><span class="step-number">2</span> Your Proposal <span style="font-size: 0.8rem; font-weight: normal; color: #666;">(Optional)</span></h2>
-                <p class="card-description">
-                    Have an existing proposal? Upload it for expert review and recommendations.
-                    Or skip this and generate a new estimate from the bid documents.
-                </p>
-                
-                <div class="status-indicator pending" id="proposalStatus">
-                    <span class="dot"></span>
-                    <span>No proposal uploaded</span>
-                </div>
-
-                <div class="file-upload" id="proposalUpload">
-                    <input type="file" id="proposalFiles" multiple accept=".pdf,.xlsx,.xls,.xlsm">
-                    <div class="upload-icon">&#128203;</div>
-                    <div class="upload-text">Upload existing proposal</div>
-                    <div class="file-types">PDF, Excel (.xlsx, .xls)</div>
-                </div>
-                
-                <div class="file-list" id="proposalFileList"></div>
-                
-                <button class="btn btn-secondary btn-block" id="parseProposalBtn" disabled>
-                    Upload & Review Proposal
-                </button>
-            </div>
-        </div>
-
-        <!-- Action Buttons -->
-        <div class="card" style="text-align: center;">
-            <h2 style="justify-content: center;"><span class="step-number">3</span> Generate & Analyze</h2>
+        <!-- Step 1: Upload Bid Documents -->
+        <div class="card">
+            <h2><span class="step-number">1</span> Upload Bid Documents</h2>
             <p class="card-description">
-                Generate a new bid estimate with material, labor, and equipment cost breakdowns.
-                Or analyze your uploaded proposal for expert recommendations.
+                Upload the RFP, bid schedule, specifications, or any bid documents from the owner/agency.
+                AI will extract line items, quantities, requirements, and provide expert cost estimates.
             </p>
             
-            <div class="btn-group" style="justify-content: center;">
-                <button class="btn" id="generateEstimateBtn" disabled>
-                    Generate New Estimate
-                </button>
-                <button class="btn btn-secondary" id="analyzeBtn" disabled>
-                    Analyze & Review
-                </button>
+            <div class="status-indicator pending" id="bidDocsStatus">
+                <span class="dot"></span>
+                <span>No documents uploaded</span>
             </div>
+
+            <div class="file-upload" id="bidDocsUpload">
+                <input type="file" id="bidDocsFiles" multiple accept=".pdf,.xlsx,.xls,.xlsm">
+                <div class="upload-icon">&#128196;</div>
+                <div class="upload-text">Click to select or drag & drop bid documents</div>
+                <div class="file-types">PDF, Excel (.xlsx, .xls)</div>
+            </div>
+            
+            <div class="file-list" id="bidDocsFileList"></div>
+            
+            <button class="btn btn-block" id="parseBidDocsBtn" disabled>
+                Parse Bid Documents
+            </button>
+        </div>
+
+        <!-- Step 2: Analyze -->
+        <div class="card" style="text-align: center;">
+            <h2 style="justify-content: center;"><span class="step-number">2</span> Analyze & Generate Estimate</h2>
+            <p class="card-description">
+                Generate an expert bid analysis with material, labor, and equipment cost breakdowns.
+                Get recommendations and export the results.
+            </p>
+            
+            <button class="btn btn-block" id="analyzeBtn" disabled style="max-width: 400px; margin: 15px auto 0;">
+                Analyze Bid Documents
+            </button>
             <p style="color: #666; font-size: 0.85rem; margin-top: 15px;">
-                Upload bid documents first to enable these actions
+                Upload and parse bid documents first to enable analysis
             </p>
         </div>
 
@@ -269,6 +230,7 @@
             <div class="analysis-header">
                 <h2 style="margin: 0;"><span style="color: #C8102E; margin-right: 8px;">&#128202;</span> Analysis Results</h2>
                 <div class="btn-group">
+                    <button class="btn btn-sm" id="exportPdfBtn">Export PDF</button>
                     <button class="btn btn-sm btn-secondary" id="exportWordBtn">Export Word</button>
                     <button class="btn btn-sm btn-secondary" id="exportExcelBtn">Export Excel</button>
                     <button class="btn btn-sm btn-outline" id="newAnalysisBtn">Start New</button>
@@ -312,23 +274,14 @@
         const bidDocsFiles = document.getElementById('bidDocsFiles');
         const bidDocsFileList = document.getElementById('bidDocsFileList');
         const parseBidDocsBtn = document.getElementById('parseBidDocsBtn');
-
-        const proposalUpload = document.getElementById('proposalUpload');
-        const proposalFiles = document.getElementById('proposalFiles');
-        const proposalFileList = document.getElementById('proposalFileList');
-        const parseProposalBtn = document.getElementById('parseProposalBtn');
-
-        const generateEstimateBtn = document.getElementById('generateEstimateBtn');
         const analyzeBtn = document.getElementById('analyzeBtn');
         const resultsSection = document.getElementById('resultsSection');
 
         // State
         let bidDocsData = null;
-        let proposalData = null;
         let analysisResults = null;
 
         setupFileUpload(bidDocsUpload, bidDocsFiles, bidDocsFileList, parseBidDocsBtn);
-        setupFileUpload(proposalUpload, proposalFiles, proposalFileList, parseProposalBtn);
 
         function setupFileUpload(uploadDiv, fileInput, fileListDiv, btn) {
             uploadDiv.addEventListener('click', () => fileInput.click());
@@ -372,7 +325,7 @@
             Array.from(bidDocsFiles.files).forEach(file => formData.append('files', file));
 
             parseBidDocsBtn.disabled = true;
-            parseBidDocsBtn.innerHTML = '<span class="spinner"></span>Parsing...';
+            parseBidDocsBtn.innerHTML = '<span class="spinner"></span>Parsing documents...';
             updateStatus('bidDocsStatus', 'processing', 'Processing documents...');
 
             try {
@@ -382,7 +335,6 @@
                 if (data.success) {
                     bidDocsData = data;
                     updateStatus('bidDocsStatus', 'ready', `${data.line_item_count} line items extracted`);
-                    generateEstimateBtn.disabled = false;
                     analyzeBtn.disabled = false;
                 } else {
                     updateStatus('bidDocsStatus', 'pending', `Error: ${data.error}`);
@@ -395,67 +347,10 @@
             }
         });
 
-        // Parse Proposal
-        parseProposalBtn.addEventListener('click', async () => {
-            const formData = new FormData();
-            Array.from(proposalFiles.files).forEach(file => formData.append('files', file));
-
-            parseProposalBtn.disabled = true;
-            parseProposalBtn.innerHTML = '<span class="spinner"></span>Uploading...';
-            updateStatus('proposalStatus', 'processing', 'Processing proposal...');
-
-            try {
-                const response = await fetch('/api/parse-proposal', { method: 'POST', body: formData });
-                const data = await response.json();
-
-                if (data.success) {
-                    proposalData = data;
-                    updateStatus('proposalStatus', 'ready', `${data.line_item_count} items loaded`);
-                    analyzeBtn.disabled = false;
-                } else {
-                    updateStatus('proposalStatus', 'pending', `Error: ${data.error}`);
-                }
-            } catch (err) {
-                updateStatus('proposalStatus', 'pending', `Error: ${err.message}`);
-            } finally {
-                parseProposalBtn.disabled = false;
-                parseProposalBtn.textContent = 'Upload & Review Proposal';
-            }
-        });
-
-        // Generate Estimate
-        generateEstimateBtn.addEventListener('click', async () => {
-            generateEstimateBtn.disabled = true;
-            generateEstimateBtn.innerHTML = '<span class="spinner"></span>Generating estimate...';
-
-            try {
-                const response = await fetch('/api/generate-estimate', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' }
-                });
-                const data = await response.json();
-
-                if (data.success) {
-                    proposalData = data;
-                    updateStatus('proposalStatus', 'ready', `Estimate generated: ${data.bid_items?.length || 0} items`);
-                    
-                    // Auto-run analysis
-                    analyzeBtn.click();
-                } else {
-                    alert(`Error: ${data.error}`);
-                }
-            } catch (err) {
-                alert(`Error: ${err.message}`);
-            } finally {
-                generateEstimateBtn.disabled = false;
-                generateEstimateBtn.textContent = 'Generate New Estimate';
-            }
-        });
-
         // Analyze
         analyzeBtn.addEventListener('click', async () => {
             analyzeBtn.disabled = true;
-            analyzeBtn.innerHTML = '<span class="spinner"></span>Analyzing...';
+            analyzeBtn.innerHTML = '<span class="spinner"></span>Analyzing bid documents...';
 
             try {
                 const response = await fetch('/api/analyze', {
@@ -474,7 +369,7 @@
                 alert(`Error: ${err.message}`);
             } finally {
                 analyzeBtn.disabled = false;
-                analyzeBtn.textContent = 'Analyze & Review';
+                analyzeBtn.textContent = 'Analyze Bid Documents';
             }
         });
 
@@ -486,7 +381,7 @@
             
             document.getElementById('statusBanner').innerHTML = `
                 <div style="background: ${statusColor}20; border-left: 4px solid ${statusColor}; padding: 15px; margin-bottom: 20px; border-radius: 0 6px 6px 0;">
-                    <strong style="color: ${statusColor}; font-size: 1.1rem;">${status.status || 'REVIEW'}</strong>
+                    <strong style="color: ${statusColor}; font-size: 1.1rem;">${status.status || 'ANALYSIS COMPLETE'}</strong>
                     <p style="margin: 5px 0 0 0;">${status.message || ''}</p>
                 </div>
             `;
@@ -505,7 +400,7 @@
                 </div>
                 <div class="score-box" style="background: #fff3e0;">
                     <div class="number" style="color: #E67E22;">$${(pricing.total_bid || 0).toLocaleString()}</div>
-                    <div class="label">Total Bid</div>
+                    <div class="label">Estimated Total</div>
                 </div>
             `;
 
@@ -527,6 +422,20 @@
                 `;
             });
 
+            // Display line items if available
+            const estimate = data.estimate || {};
+            const bidItems = estimate.bid_items || [];
+            if (bidItems.length > 0) {
+                let itemsHtml = '<table style="width:100%; border-collapse: collapse; font-size: 0.85rem;">';
+                itemsHtml += '<tr style="background: #1B365D; color: white;"><th style="padding: 10px; text-align: left;">Item</th><th style="padding: 10px; text-align: left;">Description</th><th style="padding: 10px; text-align: right;">Qty</th><th style="padding: 10px;">Unit</th><th style="padding: 10px; text-align: right;">Unit Price</th><th style="padding: 10px; text-align: right;">Total</th></tr>';
+                bidItems.forEach((item, i) => {
+                    const bg = i % 2 === 0 ? '#f8f9fa' : '#ffffff';
+                    itemsHtml += `<tr style="background: ${bg};"><td style="padding: 8px; border-bottom: 1px solid #ddd;">${item.item_number || ''}</td><td style="padding: 8px; border-bottom: 1px solid #ddd;">${item.description || ''}</td><td style="padding: 8px; border-bottom: 1px solid #ddd; text-align: right;">${(item.quantity || 0).toLocaleString()}</td><td style="padding: 8px; border-bottom: 1px solid #ddd; text-align: center;">${item.unit || ''}</td><td style="padding: 8px; border-bottom: 1px solid #ddd; text-align: right;">$${(item.unit_price || 0).toLocaleString()}</td><td style="padding: 8px; border-bottom: 1px solid #ddd; text-align: right; font-weight: bold;">$${(item.total_price || 0).toLocaleString()}</td></tr>`;
+                });
+                itemsHtml += '</table>';
+                document.getElementById('lineItemsContent').innerHTML = itemsHtml;
+            }
+
             resultsSection.scrollIntoView({ behavior: 'smooth' });
         }
 
@@ -540,7 +449,33 @@
             });
         });
 
-        // Export buttons
+        // Export PDF
+        document.getElementById('exportPdfBtn').addEventListener('click', async () => {
+            const btn = document.getElementById('exportPdfBtn');
+            btn.disabled = true;
+            btn.textContent = 'Exporting...';
+            try {
+                const response = await fetch('/api/export/pdf', { method: 'POST' });
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'Bid_Analysis.pdf';
+                    a.click();
+                } else {
+                    const data = await response.json();
+                    alert(`Export failed: ${data.error}`);
+                }
+            } catch (err) {
+                alert(`Error: ${err.message}`);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Export PDF';
+            }
+        });
+
+        // Export Word
         document.getElementById('exportWordBtn').addEventListener('click', async () => {
             const btn = document.getElementById('exportWordBtn');
             btn.disabled = true;
@@ -566,6 +501,7 @@
             }
         });
 
+        // Export Excel
         document.getElementById('exportExcelBtn').addEventListener('click', async () => {
             const btn = document.getElementById('exportExcelBtn');
             btn.disabled = true;
@@ -591,6 +527,7 @@
             }
         });
 
+        // New Analysis
         document.getElementById('newAnalysisBtn').addEventListener('click', async () => {
             if (confirm('Start fresh? This will clear current data.')) {
                 await fetch('/api/clear', { method: 'POST' });
@@ -603,12 +540,7 @@
             if (data.has_bid_docs) {
                 updateStatus('bidDocsStatus', 'ready', 'Documents loaded');
                 bidDocsData = true;
-                generateEstimateBtn.disabled = false;
                 analyzeBtn.disabled = false;
-            }
-            if (data.has_proposal || data.has_estimate) {
-                updateStatus('proposalStatus', 'ready', 'Proposal loaded');
-                proposalData = true;
             }
         });
     </script>
