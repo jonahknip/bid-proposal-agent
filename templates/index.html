@@ -13,7 +13,7 @@
             min-height: 100vh;
             padding: 20px;
         }
-        .container { max-width: 900px; margin: 0 auto; }
+        .container { max-width: 1000px; margin: 0 auto; }
         header { text-align: center; margin-bottom: 30px; }
         .logo { display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 10px; }
         .logo-icon { width: 50px; height: 50px; }
@@ -34,27 +34,13 @@
             color: #1B365D;
             font-size: 1.2rem;
             margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .card h2 .step-number {
-            background: #1B365D;
-            color: white;
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.9rem;
         }
         .card-description { color: #666; font-size: 0.9rem; margin-bottom: 15px; line-height: 1.5; }
 
         .file-upload {
             border: 2px dashed #ccc;
             border-radius: 8px;
-            padding: 30px 20px;
+            padding: 40px 20px;
             text-align: center;
             cursor: pointer;
             transition: all 0.2s;
@@ -64,8 +50,8 @@
         .file-upload.dragover { border-color: #C8102E; background: #FFF0F0; }
         .file-upload.has-files { border-color: #28a745; background: #F0FFF0; }
         .file-upload input { display: none; }
-        .file-upload .upload-icon { font-size: 2rem; color: #999; margin-bottom: 10px; }
-        .file-upload .upload-text { color: #666; font-size: 0.95rem; }
+        .file-upload .upload-icon { font-size: 3rem; color: #999; margin-bottom: 10px; }
+        .file-upload .upload-text { color: #666; font-size: 1rem; }
         .file-upload .file-types { color: #999; font-size: 0.8rem; margin-top: 8px; }
 
         .file-list { margin-top: 15px; font-size: 0.9rem; }
@@ -76,64 +62,41 @@
         }
 
         .btn {
-            display: inline-block; padding: 12px 24px;
+            display: inline-block; padding: 14px 28px;
             background: #C8102E; color: white; border: none;
-            border-radius: 6px; font-size: 0.95rem; font-weight: 600;
+            border-radius: 6px; font-size: 1rem; font-weight: 600;
             cursor: pointer; transition: background 0.2s; text-align: center;
         }
         .btn:hover:not(:disabled) { background: #A00D25; }
         .btn:disabled { background: #ccc; cursor: not-allowed; }
-        .btn-block { width: 100%; margin-top: 15px; }
+        .btn-block { width: 100%; margin-top: 20px; }
         .btn-secondary { background: #1B365D; }
         .btn-secondary:hover:not(:disabled) { background: #132744; }
         .btn-outline { background: transparent; border: 2px solid #C8102E; color: #C8102E; }
         .btn-outline:hover:not(:disabled) { background: #C8102E; color: white; }
         .btn-sm { padding: 8px 16px; font-size: 0.85rem; }
-        .btn-group { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px; }
-
-        .status-indicator {
-            display: flex; align-items: center; gap: 8px;
-            padding: 10px 15px; border-radius: 6px;
-            margin-bottom: 15px; font-size: 0.9rem;
-        }
-        .status-indicator.pending { background: #F5F5F5; color: #666; }
-        .status-indicator.ready { background: #D4EDDA; color: #155724; }
-        .status-indicator.processing { background: #FFF3CD; color: #856404; }
-        .status-indicator .dot { width: 10px; height: 10px; border-radius: 50%; background: currentColor; }
+        .btn-group { display: flex; gap: 10px; flex-wrap: wrap; }
 
         .spinner {
-            display: inline-block; width: 16px; height: 16px;
-            border: 2px solid #C8102E; border-top-color: transparent;
+            display: inline-block; width: 18px; height: 18px;
+            border: 3px solid white; border-top-color: transparent;
             border-radius: 50%; animation: spin 1s linear infinite;
-            margin-right: 8px; vertical-align: middle;
+            margin-right: 10px; vertical-align: middle;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
         .info-box {
             background: #E3F2FD; border-left: 4px solid #1B365D;
-            padding: 15px; margin-bottom: 15px; border-radius: 0 6px 6px 0;
+            padding: 15px; margin-bottom: 20px; border-radius: 0 6px 6px 0;
             font-size: 0.9rem; color: #1B365D;
         }
-        .info-box strong { display: block; margin-bottom: 5px; }
-
-        .tabs { display: flex; gap: 5px; margin-bottom: 15px; border-bottom: 2px solid #ddd; }
-        .tab {
-            padding: 10px 20px; background: transparent; border: none;
-            cursor: pointer; font-size: 0.9rem; color: #666;
-            border-bottom: 2px solid transparent; margin-bottom: -2px;
-        }
-        .tab:hover { color: #1B365D; }
-        .tab.active { color: #1B365D; border-bottom-color: #C8102E; font-weight: 600; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
 
         .report-content {
             background: #FAFAFA; border: 1px solid #ddd;
             border-radius: 8px; padding: 20px;
-            max-height: 600px; overflow-y: auto;
+            max-height: 700px; overflow-y: auto;
         }
 
-        .analysis-section { margin-top: 20px; }
         .analysis-header {
             display: flex; justify-content: space-between;
             align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;
@@ -147,20 +110,39 @@
         .score-box .number { font-size: 2rem; font-weight: 700; }
         .score-box .label { font-size: 0.8rem; color: #666; margin-top: 5px; }
 
-        .issues-list { list-style: none; padding: 0; }
-        .issues-list li {
+        .tabs { display: flex; gap: 5px; margin-bottom: 15px; border-bottom: 2px solid #ddd; }
+        .tab {
+            padding: 10px 20px; background: transparent; border: none;
+            cursor: pointer; font-size: 0.9rem; color: #666;
+            border-bottom: 2px solid transparent; margin-bottom: -2px;
+        }
+        .tab:hover { color: #1B365D; }
+        .tab.active { color: #1B365D; border-bottom-color: #C8102E; font-weight: 600; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .rec-list { list-style: none; padding: 0; }
+        .rec-list li {
             padding: 12px 15px; margin-bottom: 8px; border-radius: 6px;
             display: flex; align-items: flex-start; gap: 10px;
         }
-        .issues-list li.critical { background: #F8D7DA; border-left: 4px solid #DC3545; }
-        .issues-list li.high { background: #FFF3CD; border-left: 4px solid #FFC107; }
-        .issues-list li.medium { background: #E3F2FD; border-left: 4px solid #1B365D; }
+        .rec-list li.critical { background: #F8D7DA; border-left: 4px solid #DC3545; }
+        .rec-list li.high { background: #FFF3CD; border-left: 4px solid #FFC107; }
+        .rec-list li.medium { background: #E3F2FD; border-left: 4px solid #1B365D; }
+
+        .progress-status {
+            padding: 15px; background: #FFF3CD; border-radius: 8px;
+            margin-bottom: 20px; text-align: center; font-size: 0.95rem;
+        }
+        .progress-status.error { background: #F8D7DA; color: #721c24; }
 
         footer {
             text-align: center; color: #999; font-size: 0.85rem;
             margin-top: 30px; padding: 20px;
         }
         footer a { color: #C8102E; text-decoration: none; }
+
+        #resultsSection { display: none; }
     </style>
 </head>
 <body>
@@ -178,61 +160,45 @@
         </header>
 
         <div class="info-box">
-            <strong>How It Works</strong>
-            Upload bid documents (RFP, bid schedule, specs) and get an expert analysis with material, labor, and equipment cost breakdowns. Export to PDF, Word, or Excel.
+            <strong>Upload bid documents (RFP, bid schedule, specs) and get an expert analysis with material, labor, and equipment cost breakdowns.</strong>
         </div>
 
-        <!-- Step 1: Upload Bid Documents -->
-        <div class="card">
-            <h2><span class="step-number">1</span> Upload Bid Documents</h2>
+        <!-- Upload Section -->
+        <div class="card" id="uploadSection">
+            <h2>Upload Bid Documents</h2>
             <p class="card-description">
-                Upload the RFP, bid schedule, specifications, or any bid documents from the owner/agency.
-                AI will extract line items, quantities, requirements, and provide expert cost estimates.
+                Upload the RFP, bid schedule, specifications, or any bid documents. 
+                AI will analyze everything and provide expert cost estimates with recommendations.
             </p>
-            
-            <div class="status-indicator pending" id="bidDocsStatus">
-                <span class="dot"></span>
-                <span>No documents uploaded</span>
-            </div>
 
-            <div class="file-upload" id="bidDocsUpload">
-                <input type="file" id="bidDocsFiles" multiple accept=".pdf,.xlsx,.xls,.xlsm">
+            <div class="file-upload" id="fileUpload">
+                <input type="file" id="fileInput" multiple accept=".pdf,.xlsx,.xls,.xlsm">
                 <div class="upload-icon">&#128196;</div>
                 <div class="upload-text">Click to select or drag & drop bid documents</div>
                 <div class="file-types">PDF, Excel (.xlsx, .xls)</div>
             </div>
             
-            <div class="file-list" id="bidDocsFileList"></div>
+            <div class="file-list" id="fileList"></div>
             
-            <button class="btn btn-block" id="parseBidDocsBtn" disabled>
-                Parse Bid Documents
+            <button class="btn btn-block" id="analyzeBtn" disabled>
+                Analyze Bid Documents
             </button>
         </div>
 
-        <!-- Step 2: Analyze -->
-        <div class="card" style="text-align: center;">
-            <h2 style="justify-content: center;"><span class="step-number">2</span> Analyze & Generate Estimate</h2>
-            <p class="card-description">
-                Generate an expert bid analysis with material, labor, and equipment cost breakdowns.
-                Get recommendations and export the results.
-            </p>
-            
-            <button class="btn btn-block" id="analyzeBtn" disabled style="max-width: 400px; margin: 15px auto 0;">
-                Analyze Bid Documents
-            </button>
-            <p style="color: #666; font-size: 0.85rem; margin-top: 15px;">
-                Upload and parse bid documents first to enable analysis
-            </p>
+        <!-- Progress -->
+        <div class="progress-status" id="progressStatus" style="display: none;">
+            <span class="spinner"></span>
+            <span id="progressText">Processing...</span>
         </div>
 
         <!-- Results Section -->
-        <div class="card analysis-section" id="resultsSection" style="display: none;">
+        <div class="card" id="resultsSection">
             <div class="analysis-header">
-                <h2 style="margin: 0;"><span style="color: #C8102E; margin-right: 8px;">&#128202;</span> Analysis Results</h2>
+                <h2 style="margin: 0;">Analysis Results</h2>
                 <div class="btn-group">
                     <button class="btn btn-sm" id="exportWordBtn">Export Word</button>
                     <button class="btn btn-sm btn-secondary" id="exportExcelBtn">Export Excel</button>
-                    <button class="btn btn-sm btn-outline" id="newAnalysisBtn">Start New</button>
+                    <button class="btn btn-sm btn-outline" id="newAnalysisBtn">New Analysis</button>
                 </div>
             </div>
 
@@ -241,23 +207,23 @@
             <div class="score-grid" id="scoreGrid"></div>
 
             <div class="tabs">
-                <button class="tab active" data-tab="report">Report</button>
-                <button class="tab" data-tab="recommendations">Recommendations</button>
+                <button class="tab active" data-tab="summary">Summary</button>
                 <button class="tab" data-tab="items">Line Items</button>
+                <button class="tab" data-tab="recommendations">Recommendations</button>
             </div>
 
-            <div class="tab-content active" id="tab-report">
+            <div class="tab-content active" id="tab-summary">
                 <div class="report-content" id="reportContent"></div>
             </div>
 
-            <div class="tab-content" id="tab-recommendations">
-                <ul class="issues-list" id="recommendationsList"></ul>
+            <div class="tab-content" id="tab-items">
+                <div class="report-content" id="itemsContent">
+                    <p style="color: #666;">Line items will appear here.</p>
+                </div>
             </div>
 
-            <div class="tab-content" id="tab-items">
-                <div id="lineItemsContent">
-                    <p style="color: #666;">Line items will appear here after analysis.</p>
-                </div>
+            <div class="tab-content" id="tab-recommendations">
+                <ul class="rec-list" id="recList"></ul>
             </div>
         </div>
 
@@ -268,111 +234,103 @@
     </div>
 
     <script>
-        // File upload setup
-        const bidDocsUpload = document.getElementById('bidDocsUpload');
-        const bidDocsFiles = document.getElementById('bidDocsFiles');
-        const bidDocsFileList = document.getElementById('bidDocsFileList');
-        const parseBidDocsBtn = document.getElementById('parseBidDocsBtn');
+        const fileUpload = document.getElementById('fileUpload');
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
         const analyzeBtn = document.getElementById('analyzeBtn');
+        const progressStatus = document.getElementById('progressStatus');
+        const progressText = document.getElementById('progressText');
+        const uploadSection = document.getElementById('uploadSection');
         const resultsSection = document.getElementById('resultsSection');
 
-        // State
-        let bidDocsData = null;
-        let analysisResults = null;
+        // File upload handling
+        fileUpload.addEventListener('click', () => fileInput.click());
+        fileUpload.addEventListener('dragover', (e) => { e.preventDefault(); fileUpload.classList.add('dragover'); });
+        fileUpload.addEventListener('dragleave', () => fileUpload.classList.remove('dragover'));
+        fileUpload.addEventListener('drop', (e) => {
+            e.preventDefault();
+            fileUpload.classList.remove('dragover');
+            fileInput.files = e.dataTransfer.files;
+            updateFileList();
+        });
+        fileInput.addEventListener('change', updateFileList);
 
-        setupFileUpload(bidDocsUpload, bidDocsFiles, bidDocsFileList, parseBidDocsBtn);
-
-        function setupFileUpload(uploadDiv, fileInput, fileListDiv, btn) {
-            uploadDiv.addEventListener('click', () => fileInput.click());
-            uploadDiv.addEventListener('dragover', (e) => { e.preventDefault(); uploadDiv.classList.add('dragover'); });
-            uploadDiv.addEventListener('dragleave', () => uploadDiv.classList.remove('dragover'));
-            uploadDiv.addEventListener('drop', (e) => {
-                e.preventDefault();
-                uploadDiv.classList.remove('dragover');
-                fileInput.files = e.dataTransfer.files;
-                updateFileList(fileInput, fileListDiv, uploadDiv, btn);
-            });
-            fileInput.addEventListener('change', () => updateFileList(fileInput, fileListDiv, uploadDiv, btn));
-        }
-
-        function updateFileList(fileInput, fileListDiv, uploadDiv, btn) {
-            fileListDiv.innerHTML = '';
+        function updateFileList() {
+            fileList.innerHTML = '';
             if (fileInput.files.length > 0) {
-                uploadDiv.classList.add('has-files');
-                btn.disabled = false;
+                fileUpload.classList.add('has-files');
+                analyzeBtn.disabled = false;
                 Array.from(fileInput.files).forEach(file => {
                     const div = document.createElement('div');
                     div.className = 'file-item';
                     div.innerHTML = `<span>&#128196;</span><span>${file.name}</span><span style="color:#999;font-size:0.8rem;">(${(file.size/1024/1024).toFixed(1)} MB)</span>`;
-                    fileListDiv.appendChild(div);
+                    fileList.appendChild(div);
                 });
             } else {
-                uploadDiv.classList.remove('has-files');
-                btn.disabled = true;
+                fileUpload.classList.remove('has-files');
+                analyzeBtn.disabled = true;
             }
         }
 
-        function updateStatus(elementId, status, message) {
-            const el = document.getElementById(elementId);
-            el.className = `status-indicator ${status}`;
-            el.innerHTML = `<span class="dot"></span><span>${message}</span>`;
+        function showProgress(msg) {
+            progressStatus.style.display = 'block';
+            progressStatus.className = 'progress-status';
+            progressText.textContent = msg;
         }
 
-        // Parse Bid Documents
-        parseBidDocsBtn.addEventListener('click', async () => {
-            const formData = new FormData();
-            Array.from(bidDocsFiles.files).forEach(file => formData.append('files', file));
+        function showError(msg) {
+            progressStatus.style.display = 'block';
+            progressStatus.className = 'progress-status error';
+            progressStatus.innerHTML = msg;
+        }
 
-            parseBidDocsBtn.disabled = true;
-            parseBidDocsBtn.innerHTML = '<span class="spinner"></span>Parsing documents...';
-            updateStatus('bidDocsStatus', 'processing', 'Processing documents...');
+        function hideProgress() {
+            progressStatus.style.display = 'none';
+        }
 
-            try {
-                const response = await fetch('/api/parse-bid-docs', { method: 'POST', body: formData });
-                const data = await response.json();
-
-                if (data.success) {
-                    bidDocsData = data;
-                    updateStatus('bidDocsStatus', 'ready', `${data.line_item_count} line items extracted`);
-                    analyzeBtn.disabled = false;
-                } else {
-                    updateStatus('bidDocsStatus', 'pending', `Error: ${data.error}`);
-                }
-            } catch (err) {
-                updateStatus('bidDocsStatus', 'pending', `Error: ${err.message}`);
-            } finally {
-                parseBidDocsBtn.disabled = false;
-                parseBidDocsBtn.textContent = 'Parse Bid Documents';
-            }
-        });
-
-        // Analyze
+        // Main analyze function - single click does everything
         analyzeBtn.addEventListener('click', async () => {
+            const formData = new FormData();
+            Array.from(fileInput.files).forEach(file => formData.append('files', file));
+
             analyzeBtn.disabled = true;
-            analyzeBtn.innerHTML = '<span class="spinner"></span>Analyzing bid documents...';
+            analyzeBtn.innerHTML = '<span class="spinner"></span>Analyzing...';
+            showProgress('Uploading and parsing documents...');
 
             try {
-                const response = await fetch('/api/analyze', {
+                // Step 1: Upload and parse
+                showProgress('Extracting information from documents...');
+                const parseResponse = await fetch('/api/parse-bid-docs', { method: 'POST', body: formData });
+                const parseData = await parseResponse.json();
+
+                if (!parseData.success) {
+                    throw new Error(parseData.error || 'Failed to parse documents');
+                }
+
+                // Step 2: Analyze
+                showProgress('Generating expert analysis and cost estimates...');
+                const analyzeResponse = await fetch('/api/analyze', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' }
                 });
-                const data = await response.json();
+                const analysisData = await analyzeResponse.json();
 
-                if (data.success) {
-                    analysisResults = data;
-                    displayResults(data);
-                } else {
-                    alert(`Error: ${data.error}`);
+                if (!analysisData.success) {
+                    throw new Error(analysisData.error || 'Analysis failed');
                 }
+
+                hideProgress();
+                displayResults(analysisData);
+
             } catch (err) {
-                alert(`Error: ${err.message}`);
-            } finally {
+                showError(`Error: ${err.message}`);
                 analyzeBtn.disabled = false;
                 analyzeBtn.textContent = 'Analyze Bid Documents';
             }
         });
 
         function displayResults(data) {
+            uploadSection.style.display = 'none';
             resultsSection.style.display = 'block';
             
             const status = data.status || {};
@@ -387,6 +345,9 @@
 
             const overall = data.overall_assessment || {};
             const pricing = data.pricing_analysis || {};
+            const estimate = data.estimate || {};
+            const summary = estimate.summary || {};
+            const totalBid = summary.total_bid || pricing.total_bid || 0;
             
             document.getElementById('scoreGrid').innerHTML = `
                 <div class="score-box" style="background: #e3f2fd;">
@@ -398,41 +359,69 @@
                     <div class="label">Confidence</div>
                 </div>
                 <div class="score-box" style="background: #fff3e0;">
-                    <div class="number" style="color: #E67E22;">$${(pricing.total_bid || 0).toLocaleString()}</div>
-                    <div class="label">Estimated Total</div>
+                    <div class="number" style="color: #E67E22;">$${totalBid.toLocaleString()}</div>
+                    <div class="label">Total Estimate</div>
                 </div>
             `;
 
-            document.getElementById('reportContent').innerHTML = data.html_report || '<p>Report generated.</p>';
+            // Summary report
+            document.getElementById('reportContent').innerHTML = data.html_report || `
+                <h3>Executive Summary</h3>
+                <p>${overall.summary || 'Analysis complete.'}</p>
+            `;
 
-            const recList = document.getElementById('recommendationsList');
-            recList.innerHTML = '';
-            (data.recommendations || []).forEach((rec, i) => {
-                const priority = rec.priority || 'MEDIUM';
-                const cls = priority === 'CRITICAL' ? 'critical' : priority === 'HIGH' ? 'high' : 'medium';
-                recList.innerHTML += `
-                    <li class="${cls}">
-                        <span style="font-weight: bold; min-width: 25px;">${i+1}.</span>
-                        <div>
-                            <strong>[${priority}]</strong> ${rec.action || ''}
-                            ${rec.rationale ? `<br><small style="color: #666;">${rec.rationale}</small>` : ''}
-                        </div>
-                    </li>
-                `;
-            });
-
-            // Display line items if available
-            const estimate = data.estimate || {};
+            // Line Items
             const bidItems = estimate.bid_items || [];
             if (bidItems.length > 0) {
                 let itemsHtml = '<table style="width:100%; border-collapse: collapse; font-size: 0.85rem;">';
-                itemsHtml += '<tr style="background: #1B365D; color: white;"><th style="padding: 10px; text-align: left;">Item</th><th style="padding: 10px; text-align: left;">Description</th><th style="padding: 10px; text-align: right;">Qty</th><th style="padding: 10px;">Unit</th><th style="padding: 10px; text-align: right;">Unit Price</th><th style="padding: 10px; text-align: right;">Total</th></tr>';
+                itemsHtml += '<tr style="background: #1B365D; color: white;"><th style="padding: 10px; text-align: left;">Item</th><th style="padding: 10px; text-align: left;">Description</th><th style="padding: 10px; text-align: right;">Qty</th><th style="padding: 10px;">Unit</th><th style="padding: 10px; text-align: right;">Material</th><th style="padding: 10px; text-align: right;">Labor</th><th style="padding: 10px; text-align: right;">Equip</th><th style="padding: 10px; text-align: right;">Total</th></tr>';
                 bidItems.forEach((item, i) => {
                     const bg = i % 2 === 0 ? '#f8f9fa' : '#ffffff';
-                    itemsHtml += `<tr style="background: ${bg};"><td style="padding: 8px; border-bottom: 1px solid #ddd;">${item.item_number || ''}</td><td style="padding: 8px; border-bottom: 1px solid #ddd;">${item.description || ''}</td><td style="padding: 8px; border-bottom: 1px solid #ddd; text-align: right;">${(item.quantity || 0).toLocaleString()}</td><td style="padding: 8px; border-bottom: 1px solid #ddd; text-align: center;">${item.unit || ''}</td><td style="padding: 8px; border-bottom: 1px solid #ddd; text-align: right;">$${(item.unit_price || 0).toLocaleString()}</td><td style="padding: 8px; border-bottom: 1px solid #ddd; text-align: right; font-weight: bold;">$${(item.total_price || 0).toLocaleString()}</td></tr>`;
+                    const mat = item.material?.cost || item.material || 0;
+                    const lab = item.labor?.cost || item.labor || 0;
+                    const equip = item.equipment?.cost || item.equipment || 0;
+                    itemsHtml += `<tr style="background: ${bg};">
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd;">${item.item_number || ''}</td>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd;">${(item.description || '').substring(0, 40)}${item.description?.length > 40 ? '...' : ''}</td>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd; text-align: right;">${(item.quantity || 0).toLocaleString()}</td>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd; text-align: center;">${item.unit || ''}</td>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd; text-align: right;">$${Number(mat).toLocaleString()}</td>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd; text-align: right;">$${Number(lab).toLocaleString()}</td>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd; text-align: right;">$${Number(equip).toLocaleString()}</td>
+                        <td style="padding: 8px; border-bottom: 1px solid #ddd; text-align: right; font-weight: bold;">$${(item.total_price || 0).toLocaleString()}</td>
+                    </tr>`;
                 });
+                // Summary row
+                itemsHtml += `<tr style="background: #1B365D; color: white; font-weight: bold;">
+                    <td colspan="7" style="padding: 12px; text-align: right;">TOTAL BID:</td>
+                    <td style="padding: 12px; text-align: right;">$${totalBid.toLocaleString()}</td>
+                </tr>`;
                 itemsHtml += '</table>';
-                document.getElementById('lineItemsContent').innerHTML = itemsHtml;
+                document.getElementById('itemsContent').innerHTML = itemsHtml;
+            } else {
+                document.getElementById('itemsContent').innerHTML = '<p>No line items extracted.</p>';
+            }
+
+            // Recommendations
+            const recList = document.getElementById('recList');
+            recList.innerHTML = '';
+            const recommendations = data.recommendations || [];
+            if (recommendations.length > 0) {
+                recommendations.forEach((rec, i) => {
+                    const priority = rec.priority || 'MEDIUM';
+                    const cls = priority === 'CRITICAL' ? 'critical' : priority === 'HIGH' ? 'high' : 'medium';
+                    recList.innerHTML += `
+                        <li class="${cls}">
+                            <span style="font-weight: bold; min-width: 25px;">${i+1}.</span>
+                            <div>
+                                <strong>[${priority}]</strong> ${rec.action || ''}
+                                ${rec.rationale ? `<br><small style="color: #666;">${rec.rationale}</small>` : ''}
+                            </div>
+                        </li>
+                    `;
+                });
+            } else {
+                recList.innerHTML = '<li class="medium">No specific recommendations at this time.</li>';
             }
 
             resultsSection.scrollIntoView({ behavior: 'smooth' });
@@ -502,19 +491,8 @@
 
         // New Analysis
         document.getElementById('newAnalysisBtn').addEventListener('click', async () => {
-            if (confirm('Start fresh? This will clear current data.')) {
-                await fetch('/api/clear', { method: 'POST' });
-                location.reload();
-            }
-        });
-
-        // Check initial status
-        fetch('/api/status').then(r => r.json()).then(data => {
-            if (data.has_bid_docs) {
-                updateStatus('bidDocsStatus', 'ready', 'Documents loaded');
-                bidDocsData = true;
-                analyzeBtn.disabled = false;
-            }
+            await fetch('/api/clear', { method: 'POST' });
+            location.reload();
         });
     </script>
 </body>
