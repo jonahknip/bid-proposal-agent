@@ -1,6 +1,7 @@
 """
-Bid Proposal Agent - Web Application
-Expert civil engineering bid analysis and proposal tool
+Abonmarche Bid Proposal - Internal Tool
+Expert civil engineering bid analysis and estimating
+Internal use only - Abonmarche
 """
 
 import os
